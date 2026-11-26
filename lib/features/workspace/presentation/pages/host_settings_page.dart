@@ -617,9 +617,9 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
                 ),
               ),
               ActionChip(
-                label: const Text('Ollama Lokal', style: TextStyle(fontSize: 11.5)),
+                label: const Text('Server Lokal', style: TextStyle(fontSize: 11.5)),
                 backgroundColor: AppColors.surfaceSubtle,
-                onPressed: () => _applyPreset('http://127.0.0.1:11434/v1'),
+                onPressed: () => _applyPreset('http://100.85.100.80:11434/v1'),
               ),
             ],
           ),

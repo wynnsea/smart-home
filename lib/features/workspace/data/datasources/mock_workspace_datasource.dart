@@ -8,7 +8,7 @@ class MockWorkspaceDatasource {
       hostStatus: HostStatus(
         userName: 'Wayan',
         hostName: envHost.isNotEmpty ? 'PC Bridge ($envHost)' : 'AI Gateway Ready',
-        hostAddress: envHost.isNotEmpty ? envHost : '127.0.0.1',
+        hostAddress: envHost.isNotEmpty ? envHost : '100.85.100.80',
         hostPort: AppEnv.bridgePort,
         repoFullName: 'Belum terhubung ke repo',
         branch: 'main',

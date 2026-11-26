@@ -46,7 +46,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 450));
       expect(find.text('Agent Mode & Model'), findsOneWidget);
 
-      await tester.tap(find.text('Claude Sonnet 5.5'));
+      await tester.tap(find.text('Nemotron 3 Ultra 550B'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
 

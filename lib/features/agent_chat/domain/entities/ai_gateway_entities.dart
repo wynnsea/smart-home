@@ -37,7 +37,7 @@ class AiModelOption {
   final bool isFree;
 }
 
-/// Built-in multi-agent roster routed through the same AI Gateway.
+/// Built-in multi-agent roster routed through OpenRouter free coding models.
 const List<AiAgentProfile> kBuiltInAgents = [
   AiAgentProfile(
     id: 'wynn-coder',
@@ -51,8 +51,8 @@ const List<AiAgentProfile> kBuiltInAgents = [
   AiAgentProfile(
     id: 'bug-hunter',
     name: 'Bug Hunter',
-    tagline: 'Investigasi root-cause & debugging',
-    defaultModelLabel: 'Claude Sonnet 5.5',
+    tagline: 'Investigasi root-cause & debugging (550B)',
+    defaultModelLabel: 'Nemotron 3 Ultra 550B',
     systemPrompt:
         'Kamu adalah Bug Hunter spesialis root-cause analysis. '
         'Fokus menemukan penyebab bug, race condition, edge case, dan langkah perbaikan minimal yang aman.',
@@ -61,7 +61,7 @@ const List<AiAgentProfile> kBuiltInAgents = [
     id: 'code-reviewer',
     name: 'Code Reviewer',
     tagline: 'Audit diff, performa & keamanan',
-    defaultModelLabel: 'GPT-6.2 Sol',
+    defaultModelLabel: 'Gemma 4 31B',
     systemPrompt:
         'Kamu adalah Code Reviewer yang teliti. '
         'Tinjau kode untuk potensi bug, celah keamanan, performa, dan keterbacaan secara terstruktur.',
@@ -70,7 +70,7 @@ const List<AiAgentProfile> kBuiltInAgents = [
     id: 'ui-architect',
     name: 'UI/UX Architect',
     tagline: 'Desain Flutter, animasi & aksesibilitas',
-    defaultModelLabel: 'Gemini 4 Neon',
+    defaultModelLabel: 'Nemotron 3.5 Super',
     systemPrompt:
         'Kamu adalah UI/UX Architect spesialis Flutter & desain modern. '
         'Bantu merancang layout responsif, animasi halus, dan pengalaman pengguna yang intuitif.',
@@ -78,56 +78,50 @@ const List<AiAgentProfile> kBuiltInAgents = [
   AiAgentProfile(
     id: 'wynn-free',
     name: 'Wynn Fast',
-    tagline: 'Tanya jawab cepat (Model gratis aktif)',
-    defaultModelLabel: 'OpenRouter Free Auto',
+    tagline: 'Tanya jawab & edit cepat (1M context)',
+    defaultModelLabel: 'Nemotron 3.5 Lightning',
     systemPrompt:
         'Kamu adalah Wynn Fast, asisten serba bisa yang cepat, jelas, dan to-the-point.',
   ),
 ];
 
-/// Latest verified OpenRouter model catalog (free-first default + frontier coding).
+/// Verified live OpenRouter FREE coding models (all support tool calling).
 const List<AiModelOption> kOpenRouterModels = [
   AiModelOption(
     id: 'openrouter/free',
     label: 'OpenRouter Free Auto',
-    provider: 'OpenRouter',
+    provider: 'OpenRouter · 200K',
+    isFree: true,
+  ),
+  AiModelOption(
+    id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+    label: 'Nemotron 3 Ultra 550B',
+    provider: 'NVIDIA · 1M ctx',
     isFree: true,
   ),
   AiModelOption(
     id: 'nvidia/nemotron-3.5-super-vl:free',
-    label: 'Nemotron 3.5 Super (Free)',
-    provider: 'NVIDIA',
+    label: 'Nemotron 3.5 Super',
+    provider: 'NVIDIA · 1M ctx',
     isFree: true,
   ),
   AiModelOption(
-    id: 'anthropic/claude-sonnet-5.5',
-    label: 'Claude Sonnet 5.5',
-    provider: 'Anthropic',
+    id: 'google/gemma-4-31b-it:free',
+    label: 'Gemma 4 31B',
+    provider: 'Google · 262K',
+    isFree: true,
   ),
   AiModelOption(
-    id: 'google/gemini-4-neon',
-    label: 'Gemini 4 Neon',
-    provider: 'Google',
+    id: 'nvidia/nemotron-3.5-lightning:free',
+    label: 'Nemotron 3.5 Lightning',
+    provider: 'NVIDIA · 1M ctx',
+    isFree: true,
   ),
   AiModelOption(
-    id: 'openai/gpt-6.2-sol',
-    label: 'GPT-6.2 Sol',
-    provider: 'OpenAI',
-  ),
-  AiModelOption(
-    id: 'deepseek/deepseek-v4.1-flash',
-    label: 'DeepSeek V4.1 Flash',
-    provider: 'DeepSeek',
-  ),
-  AiModelOption(
-    id: 'qwen/qwen3.8-max-prime',
-    label: 'Qwen 3.8 Max Prime',
-    provider: 'Qwen',
-  ),
-  AiModelOption(
-    id: 'openrouter/auto-code',
-    label: 'OpenRouter Auto-Code',
-    provider: 'OpenRouter',
+    id: 'google/gemma-4-26b-a4b-it:free',
+    label: 'Gemma 4 26B Fast',
+    provider: 'Google · 262K',
+    isFree: true,
   ),
 ];
 

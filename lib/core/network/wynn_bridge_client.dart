@@ -15,7 +15,7 @@ import '../config/app_env.dart';
 @immutable
 class BridgeConfig {
   const BridgeConfig({
-    this.hostAddress = '100.84.22.14',
+    this.hostAddress = '100.85.100.80',
     this.hostPort = 8787,
     this.token = '',
     this.enabled = false,
@@ -25,10 +25,10 @@ class BridgeConfig {
     final envHost = AppEnv.bridgeHost;
     final envToken = AppEnv.bridgeToken;
     return BridgeConfig(
-      hostAddress: envHost.isNotEmpty ? envHost : '100.84.22.14',
+      hostAddress: envHost.isNotEmpty ? envHost : '100.85.100.80',
       hostPort: AppEnv.bridgePort,
       token: envToken,
-      enabled: envHost.isNotEmpty && envToken.isNotEmpty,
+      enabled: envHost.isNotEmpty,
     );
   }
 

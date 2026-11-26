@@ -38,17 +38,18 @@ void main() {
   group('Multi-agent OpenRouter payload & model resolution', () {
     test('resolves UI labels and raw OpenRouter slugs accurately', () {
       expect(
-        resolveOpenRouterModelId('Claude Sonnet 5.5'),
-        equals('anthropic/claude-sonnet-5.5'),
+        resolveOpenRouterModelId('Nemotron 3 Ultra 550B'),
+        equals('nvidia/nemotron-3-ultra-550b-a55b:free'),
       );
       expect(
         resolveOpenRouterModelId('OpenRouter Free Auto'),
         equals('openrouter/free'),
       );
       expect(
-        resolveOpenRouterModelId('qwen/qwen3.8-max-prime'),
-        equals('qwen/qwen3.8-max-prime'),
+        resolveOpenRouterModelId('Gemma 4 31B'),
+        equals('google/gemma-4-31b-it:free'),
       );
+      expect(kOpenRouterModels.every((m) => m.isFree), isTrue);
     });
 
     test('builds system prompt with selected agent persona, mode, and attached files', () {
@@ -56,12 +57,12 @@ void main() {
       final payload = buildOpenRouterPayload(
         prompt: 'Kenapa stream putus?',
         mode: AgentMode.investigate,
-        modelName: 'Claude Sonnet 5.5',
+        modelName: 'Nemotron 3 Ultra 550B',
         agent: agent,
         attachedFiles: const ['lib/sse_client.dart'],
       );
 
-      expect(payload['model'], equals('anthropic/claude-sonnet-5.5'));
+      expect(payload['model'], equals('nvidia/nemotron-3-ultra-550b-a55b:free'));
       expect(payload['stream'], isTrue);
       final messages = payload['messages'] as List<Map<String, String>>;
       expect(messages.first['role'], equals('system'));
