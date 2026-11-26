@@ -9,6 +9,7 @@ import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../widgets/dashboard_cards.dart';
 import 'home_dashboard_page.dart';
 import 'host_settings_page.dart';
+import 'repos_page.dart';
 
 /// Root navigation shell with animated living pastel mesh backdrop,
 /// fluid AnimatedSwitcher tab transitions, and keyboard-aware floating dock.
@@ -34,6 +35,11 @@ class _AppShellPageState extends ConsumerState<AppShellPage> {
         onBack: () => setState(() => _tabIndex = 0),
       ),
       2 => const GitDiffPage(key: ValueKey('tab-diff')),
+      4 => ReposPage(
+        key: const ValueKey('tab-repos'),
+        onOpenHostTab: () => setState(() => _tabIndex = 3),
+        onOpenChatTab: _openChatAi,
+      ),
       _ => const HostSettingsPage(key: ValueKey('tab-host')),
     };
   }

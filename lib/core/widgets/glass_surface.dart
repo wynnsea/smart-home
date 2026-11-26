@@ -35,6 +35,7 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = BorderRadius.circular(borderRadius);
     final topAlpha = (0.64 * tintStrength).clamp(0.18, 0.90);
     final midAlpha = (0.34 * tintStrength).clamp(0.12, 0.80);
@@ -44,6 +45,7 @@ class GlassCard extends StatelessWidget {
       foregroundPainter: _LiquidGlassRimPainter(
         borderRadius: borderRadius,
         accentBorder: borderColor,
+        isDark: isDark,
       ),
       child: Container(
         decoration: BoxDecoration(
@@ -56,6 +58,21 @@ class GlassCard extends StatelessWidget {
                     color!.withValues(alpha: blur ? 0.78 : 0.92),
                     color!.withValues(alpha: blur ? 0.56 : 0.86),
                   ],
+                )
+              : isDark
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: blur
+                      ? [
+                          const Color(0xFF232845).withValues(alpha: 0.72),
+                          const Color(0xFF171B32).withValues(alpha: 0.58),
+                          const Color(0xFF1E223D).withValues(alpha: 0.68),
+                        ]
+                      : [
+                          const Color(0xFF212642).withValues(alpha: 0.92),
+                          const Color(0xFF181C33).withValues(alpha: 0.94),
+                        ],
                 )
               : blur
               ? LinearGradient(
@@ -91,7 +108,7 @@ class GlassCard extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       Colors.white.withValues(alpha: 0.0),
-                      Colors.white.withValues(alpha: 0.92),
+                      Colors.white.withValues(alpha: isDark ? 0.28 : 0.92),
                       Colors.white.withValues(alpha: 0.0),
                     ],
                   ),
@@ -165,12 +182,14 @@ class LiquidGlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5A45B5).withValues(alpha: 0.13),
+            color: (isDark ? Colors.black : const Color(0xFF5A45B5))
+                .withValues(alpha: isDark ? 0.35 : 0.13),
             blurRadius: 24,
             spreadRadius: -2,
             offset: const Offset(0, 10),
@@ -182,9 +201,10 @@ class LiquidGlassPill extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
           child: CustomPaint(
-            foregroundPainter: const _LiquidGlassRimPainter(
+            foregroundPainter: _LiquidGlassRimPainter(
               borderRadius: 999,
               strokeWidth: 1.5,
+              isDark: isDark,
             ),
             child: Container(
               height: height,
@@ -194,11 +214,17 @@ class LiquidGlassPill extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.66),
-                    Colors.white.withValues(alpha: 0.36),
-                    Colors.white.withValues(alpha: 0.56),
-                  ],
+                  colors: isDark
+                      ? [
+                          const Color(0xFF232846).withValues(alpha: 0.78),
+                          const Color(0xFF171B32).withValues(alpha: 0.66),
+                          const Color(0xFF1E233E).withValues(alpha: 0.74),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.66),
+                          Colors.white.withValues(alpha: 0.36),
+                          Colors.white.withValues(alpha: 0.56),
+                        ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
               ),
@@ -235,6 +261,7 @@ class GlassCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final semanticLabel = badgeText != null && badgeText!.isNotEmpty
         ? '$tooltip, $badgeText'
         : tooltip;
@@ -243,6 +270,7 @@ class GlassCircleButton extends StatelessWidget {
       foregroundPainter: _LiquidGlassRimPainter(
         borderRadius: size / 2,
         strokeWidth: 1.4,
+        isDark: isDark,
       ),
       child: Container(
         width: size,
@@ -252,7 +280,12 @@ class GlassCircleButton extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: blur
+            colors: isDark
+                ? [
+                    const Color(0xFF252B49).withValues(alpha: blur ? 0.78 : 0.94),
+                    const Color(0xFF191D34).withValues(alpha: blur ? 0.64 : 0.90),
+                  ]
+                : blur
                 ? [
                     Colors.white.withValues(alpha: 0.72),
                     Colors.white.withValues(alpha: 0.36),
@@ -267,7 +300,9 @@ class GlassCircleButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 19,
-          color: iconColor ?? AppColors.textPrimary,
+          color:
+              iconColor ??
+              (isDark ? const Color(0xFFF2F3FF) : AppColors.textPrimary),
         ),
       ),
     );
@@ -359,11 +394,13 @@ class _LiquidGlassRimPainter extends CustomPainter {
     required this.borderRadius,
     this.strokeWidth = 1.35,
     this.accentBorder,
+    this.isDark = false,
   });
 
   final double borderRadius;
   final double strokeWidth;
   final Color? accentBorder;
+  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -382,9 +419,16 @@ class _LiquidGlassRimPainter extends CustomPainter {
         end: Alignment.bottomRight,
         colors: accentBorder != null
             ? [
-                Colors.white.withValues(alpha: 0.95),
-                accentBorder!.withValues(alpha: 0.55),
-                Colors.white.withValues(alpha: 0.85),
+                Colors.white.withValues(alpha: isDark ? 0.45 : 0.95),
+                accentBorder!.withValues(alpha: isDark ? 0.72 : 0.55),
+                Colors.white.withValues(alpha: isDark ? 0.35 : 0.85),
+              ]
+            : isDark
+            ? [
+                Colors.white.withValues(alpha: 0.28),
+                const Color(0xFF9E7BFF).withValues(alpha: 0.14),
+                Colors.white.withValues(alpha: 0.06),
+                Colors.white.withValues(alpha: 0.22),
               ]
             : [
                 Colors.white.withValues(alpha: 0.95),
@@ -404,6 +448,7 @@ class _LiquidGlassRimPainter extends CustomPainter {
   bool shouldRepaint(covariant _LiquidGlassRimPainter oldDelegate) {
     return oldDelegate.borderRadius != borderRadius ||
         oldDelegate.strokeWidth != strokeWidth ||
-        oldDelegate.accentBorder != accentBorder;
+        oldDelegate.accentBorder != accentBorder ||
+        oldDelegate.isDark != isDark;
   }
 }

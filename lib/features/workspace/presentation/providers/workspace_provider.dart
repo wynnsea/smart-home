@@ -61,6 +61,7 @@ class WorkspaceNotifier extends Notifier<WorkspaceOverview> {
           ),
         );
         await ref.read(gitDiffProvider.notifier).refresh();
+        await ref.read(serverStatsProvider.notifier).refresh();
         return health.latencyMs;
       }
       state = state.copyWith(
@@ -69,7 +70,7 @@ class WorkspaceNotifier extends Notifier<WorkspaceOverview> {
           latencyMs: 0,
         ),
       );
-      throw Exception(health.errorMessage ?? 'Bridge PC tidak merespons');
+      throw Exception(health.errorMessage ?? 'Server Bridge tidak merespons');
     }
 
     await Future<void>.delayed(const Duration(milliseconds: 1200));
@@ -93,7 +94,14 @@ class WorkspaceNotifier extends Notifier<WorkspaceOverview> {
   }
 
   Future<void> refresh() async {
-    await Future<void>.delayed(const Duration(milliseconds: 600));
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    if (bridgeCfg.isActive) {
+      try {
+        await reconnect();
+        return;
+      } catch (_) {}
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 400));
     final fresh = ref.read(getWorkspaceOverviewUseCaseProvider).call();
     state = fresh.copyWith(
       hostStatus: fresh.hostStatus.copyWith(
@@ -105,6 +113,26 @@ class WorkspaceNotifier extends Notifier<WorkspaceOverview> {
     );
   }
 }
+
+class ServerStatsNotifier extends Notifier<SystemStats?> {
+  @override
+  SystemStats? build() => null;
+
+  Future<void> refresh() async {
+    final cfg = ref.read(bridgeConfigProvider);
+    if (!cfg.isActive) return;
+    try {
+      state = await WynnBridgeClient().fetchSystemStats(cfg);
+    } catch (_) {
+      // Silently ignore if older bridge binary does not expose /system/stats yet
+    }
+  }
+}
+
+final serverStatsProvider =
+    NotifierProvider<ServerStatsNotifier, SystemStats?>(
+      ServerStatsNotifier.new,
+    );
 
 final workspaceOverviewProvider =
     NotifierProvider<WorkspaceNotifier, WorkspaceOverview>(

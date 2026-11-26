@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/wynn_bridge_client.dart';
+import '../../../../core/storage/app_local_storage.dart';
 import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../data/datasources/mock_agent_chat_datasource.dart';
 import '../../data/datasources/openrouter_agent_datasource.dart';
@@ -12,6 +13,7 @@ import '../../domain/entities/chat_entities.dart';
 import '../../domain/repositories/agent_chat_repository.dart';
 import '../../domain/usecases/send_coding_prompt.dart';
 import 'ai_gateway_provider.dart';
+import 'token_usage_provider.dart';
 
 const Object _unset = Object();
 
@@ -102,6 +104,17 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
       _activeSubscription = null;
     });
 
+    final saved = AppLocalStorage.loadChatSnapshot();
+    if (saved != null && saved.sessions.isNotEmpty) {
+      return AgentChatState(
+        sessions: saved.sessions,
+        activeSessionId: saved.activeSessionId,
+        mode: saved.mode,
+        selectedModel: saved.selectedModel,
+        selectedAgentId: saved.selectedAgentId,
+      );
+    }
+
     final repo = ref.watch(agentChatRepositoryProvider);
     final initialSessions = [
       ChatSession(
@@ -123,6 +136,18 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
     );
   }
 
+  void _persistState() {
+    unawaited(
+      AppLocalStorage.saveChatSnapshot(
+        sessions: state.sessions,
+        activeSessionId: state.activeSessionId,
+        mode: state.mode,
+        selectedModel: state.selectedModel,
+        selectedAgentId: state.selectedAgentId,
+      ),
+    );
+  }
+
   void _updateActiveSession(ChatSession Function(ChatSession current) updater) {
     final activeId = state.activeSessionId;
     final updatedSessions = state.sessions.map((s) {
@@ -134,10 +159,12 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
 
   void setMode(AgentMode mode) {
     state = state.copyWith(mode: mode);
+    _persistState();
   }
 
   void setModel(String model) {
     state = state.copyWith(selectedModel: model);
+    _persistState();
   }
 
   void setAgent(AiAgentProfile agent, {bool applyDefaultModel = true}) {
@@ -147,6 +174,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
           ? agent.defaultModelLabel
           : state.selectedModel,
     );
+    _persistState();
   }
 
   void toggleVoiceInput() {
@@ -178,6 +206,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
       }).toList();
       return session.copyWith(messages: updated);
     });
+    _persistState();
   }
 
   void openSessionById(
@@ -191,6 +220,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
     final exists = state.sessions.any((s) => s.id == sessionId);
     if (exists) {
       state = state.copyWith(activeSessionId: sessionId, errorMessage: null);
+      _persistState();
       return;
     }
 
@@ -219,6 +249,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
       activeSessionId: created.id,
       errorMessage: null,
     );
+    _persistState();
   }
 
   void newSession({String? repoFullName, String? branch}) {
@@ -239,6 +270,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
       attachedContextFiles: const [],
       errorMessage: null,
     );
+    _persistState();
   }
 
   void openOrCreateBranchSession(String branch) {
@@ -289,6 +321,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
     });
 
     state = state.copyWith(isStreaming: false, errorMessage: null);
+    _persistState();
   }
 
   Future<void> retryMessage(String agentMessageId) async {
@@ -366,6 +399,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
           : state.attachedContextFiles,
       errorMessage: null,
     );
+    _persistState();
 
     final useCase = SendCodingPromptUseCase(
       ref.read(agentChatRepositoryProvider),
@@ -411,6 +445,21 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
             isStreaming: chunk.partialMessage.isStreaming,
           );
 
+          if (chunk.tokenUsage != null) {
+            final u = chunk.tokenUsage!;
+            ref.read(tokenUsageProvider.notifier).recordUsage(
+              model: u.model,
+              promptTokens: u.promptTokens,
+              completionTokens: u.completionTokens,
+              totalTokens: u.totalTokens,
+              source: u.source,
+            );
+          }
+
+          if (!chunk.partialMessage.isStreaming) {
+            _persistState();
+          }
+
           if (chunk.shouldGenerateDiff) {
             if (ref.read(bridgeConfigProvider).isActive) {
               unawaited(ref.read(gitDiffProvider.notifier).refresh());
@@ -428,6 +477,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
           if (state.isStreaming) {
             state = state.copyWith(isStreaming: false);
           }
+          _persistState();
           if (!completer.isCompleted) completer.complete();
         },
         cancelOnError: true,
@@ -497,6 +547,7 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
       isStreaming: false,
       errorMessage: errMsg,
     );
+    _persistState();
   }
 }
 

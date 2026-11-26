@@ -7,7 +7,7 @@ class MockWorkspaceDatasource {
     return WorkspaceOverview(
       hostStatus: HostStatus(
         userName: 'Wayan',
-        hostName: envHost.isNotEmpty ? 'PC Bridge ($envHost)' : 'AI Gateway Ready',
+        hostName: envHost.isNotEmpty ? 'Server Bridge ($envHost)' : 'AI Gateway Ready',
         hostAddress: envHost.isNotEmpty ? envHost : '100.85.100.80',
         hostPort: AppEnv.bridgePort,
         repoFullName: 'Belum terhubung ke repo',
@@ -16,7 +16,7 @@ class MockWorkspaceDatasource {
         latencyMs: 0,
         completedTasks: 0,
         totalTasks: 0,
-        statusNote: 'Hubungkan PC Bridge di tab Host untuk remote coding & Git Diff',
+        statusNote: 'Hubungkan Server Bridge di tab Host untuk remote coding & Git Diff',
       ),
       availableBranches: const ['main'],
       sampleContextFiles: const [],

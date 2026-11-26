@@ -128,14 +128,32 @@ class ChatSession {
   }
 }
 
+class TokenUsageDelta {
+  const TokenUsageDelta({
+    required this.model,
+    required this.promptTokens,
+    required this.completionTokens,
+    required this.totalTokens,
+    required this.source,
+  });
+
+  final String model;
+  final int promptTokens;
+  final int completionTokens;
+  final int totalTokens;
+  final String source;
+}
+
 class PromptStreamChunk {
   const PromptStreamChunk({
     required this.partialMessage,
     this.logEntry,
     this.shouldGenerateDiff = false,
+    this.tokenUsage,
   });
 
   final ChatMessage partialMessage;
   final ExecutionLogEntry? logEntry;
   final bool shouldGenerateDiff;
+  final TokenUsageDelta? tokenUsage;
 }

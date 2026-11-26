@@ -4,12 +4,16 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/motion_widgets.dart';
+import '../../../agent_chat/domain/entities/token_usage_entities.dart';
 import '../../../agent_chat/presentation/pages/agent_hub_page.dart';
+import '../../../agent_chat/presentation/pages/token_usage_page.dart';
 import '../../../agent_chat/presentation/providers/agent_chat_provider.dart';
+import '../../../agent_chat/presentation/providers/token_usage_provider.dart';
 import '../../../agent_chat/presentation/widgets/session_list_sheet.dart';
 import '../../../agent_chat/presentation/widgets/terminal_logs_sheet.dart';
 import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../../git_diff/presentation/widgets/git_diff_bottom_sheet.dart';
+import '../../domain/entities/workspace_entities.dart';
 import '../providers/workspace_provider.dart';
 import '../widgets/dashboard_cards.dart';
 
@@ -36,8 +40,74 @@ class HomeDashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final overview = ref.watch(workspaceOverviewProvider);
     final diffState = ref.watch(gitDiffProvider);
+    final chatState = ref.watch(agentChatProvider);
+    final tokenUsage = ref.watch(tokenUsageProvider);
+    final systemStats = ref.watch(serverStatsProvider);
     final status = overview.hostStatus;
     final greeting = _greetingByTime(DateTime.now());
+    final savedSessions = chatState.sessions
+        .where((s) => s.messages.isNotEmpty)
+        .take(5)
+        .map(
+          (s) => CodingSession(
+            id: s.id,
+            title: s.title,
+            repoFullName: s.repoFullName,
+            branch: s.branch,
+            summary: '${s.messages.length} pesan · ${s.updatedAt}',
+            progressPercent: 100,
+            changedFilesCount: diffState.snapshot.files.length,
+            updatedAtLabel: s.updatedAt,
+            languageTag: 'AI',
+          ),
+        )
+        .toList();
+
+    final liveMetrics = <QuickMetric>[
+      QuickMetric(
+        id: 'tokens',
+        title: 'AI Tokens',
+        subtitle:
+            '${formatTokenCount(tokenUsage.todayTotalTokens)} / ${formatTokenCount(tokenUsage.dailyBudget)}',
+        progressPercent: tokenUsage.budgetPercent,
+        ringLabel: '${tokenUsage.budgetPercent}%',
+        tone: MetricTone.purple,
+        actionKey: 'tokens',
+      ),
+      QuickMetric(
+        id: 'repos',
+        title: 'Repositories',
+        subtitle: status.repoFullName,
+        progressPercent: status.isConnected ? 100 : 0,
+        ringLabel: status.isConnected ? 'ON' : 'OFF',
+        tone: MetricTone.blue,
+        actionKey: 'repos',
+      ),
+      QuickMetric(
+        id: 'diff',
+        title: 'Pending Diffs',
+        subtitle: diffState.snapshot.hasChanges
+            ? '${diffState.snapshot.files.length} file (+${diffState.snapshot.totalAdditions}/-${diffState.snapshot.totalDeletions})'
+            : 'Working tree bersih',
+        progressPercent: diffState.snapshot.hasChanges
+            ? (diffState.snapshot.files.length * 20).clamp(20, 100)
+            : 100,
+        ringLabel: '${diffState.snapshot.files.length}',
+        tone: MetricTone.amber,
+        actionKey: 'diff',
+      ),
+      QuickMetric(
+        id: 'sessions',
+        title: 'Saved Sessions',
+        subtitle: '${savedSessions.length} sesi · ${chatState.selectedModel}',
+        progressPercent: savedSessions.isEmpty
+            ? 0
+            : (savedSessions.length * 20).clamp(20, 100),
+        ringLabel: '${savedSessions.length}',
+        tone: MetricTone.green,
+        actionKey: 'sessions',
+      ),
+    ];
 
     Future<void> openAgentHub() async {
       final result = await Navigator.of(context).push<String>(
@@ -133,6 +203,10 @@ class HomeDashboardPage extends ConsumerWidget {
             child: HostHeroCard(
               status: status,
               changedFilesCount: diffState.snapshot.files.length,
+              systemStats: systemStats,
+              tokenBudgetProgress: tokenUsage.budgetProgress,
+              tokenUsageLabel:
+                  'AI Token: ${formatTokenCount(tokenUsage.todayTotalTokens)} / ${formatTokenCount(tokenUsage.dailyBudget)}',
               onTap: openAgentHub,
             ),
           ),
@@ -156,7 +230,7 @@ class HomeDashboardPage extends ConsumerWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: overview.quickMetrics.length,
+            itemCount: liveMetrics.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
@@ -164,21 +238,32 @@ class HomeDashboardPage extends ConsumerWidget {
               childAspectRatio: 1.05,
             ),
             itemBuilder: (context, index) {
-              final metric = overview.quickMetrics[index];
+              final metric = liveMetrics[index];
               return FadeSlideEntrance(
                 delay: Duration(milliseconds: 180 + index * 55),
                 child: QuickMetricCard(
                   metric: metric,
                   onTap: () {
                     switch (metric.actionKey) {
-                      case 'chat':
-                        onNavigateTab(1);
+                      case 'tokens':
+                        Navigator.of(context).push(
+                          EtherealPageRoute<void>(
+                            builder: (_) => const TokenUsagePage(),
+                          ),
+                        );
+                      case 'repos':
+                        onNavigateTab(4);
                       case 'diff':
-                        showGitDiffBottomSheet(context);
-                      case 'logs':
-                        showTerminalLogsSheet(context);
-                      case 'hub':
-                        openAgentHub();
+                        if (diffState.snapshot.hasChanges) {
+                          showGitDiffBottomSheet(context);
+                        } else {
+                          onNavigateTab(2);
+                        }
+                      case 'sessions':
+                        showSessionListSheet(
+                          context,
+                          onSessionSelected: () => onNavigateTab(1),
+                        );
                     }
                   },
                 ),
@@ -228,7 +313,7 @@ class HomeDashboardPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (overview.recentSessions.isEmpty)
+          if (savedSessions.isEmpty)
             GlassCard(
               blur: false,
               onTap: () => onNavigateTab(1),
@@ -259,7 +344,7 @@ class HomeDashboardPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Ketuk di sini untuk mulai chat AI atau sambungkan PC Bridge di tab Host.',
+                          'Ketuk di sini untuk mulai chat AI atau sambungkan Server Bridge di tab Host.',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontSize: 11.8,
                           ),
@@ -276,8 +361,8 @@ class HomeDashboardPage extends ConsumerWidget {
               ),
             )
           else
-            ...List.generate(overview.recentSessions.length, (i) {
-              final session = overview.recentSessions[i];
+            ...List.generate(savedSessions.length, (i) {
+              final session = savedSessions[i];
               return FadeSlideEntrance(
                 delay: Duration(milliseconds: 390 + i * 70),
                 child: Padding(

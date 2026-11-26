@@ -4,7 +4,6 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/ethereal_background.dart';
 import '../../../../core/widgets/glass_surface.dart';
-import '../../../../core/widgets/liquid_sheet.dart';
 import '../../../../core/widgets/motion_widgets.dart';
 import '../../../ai_avatar/domain/avatar_mood.dart';
 import '../../../ai_avatar/presentation/widgets/wynn_ai_avatar.dart';
@@ -12,6 +11,7 @@ import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../../git_diff/presentation/widgets/git_diff_bottom_sheet.dart';
 import '../../../workspace/domain/entities/workspace_entities.dart';
 import '../../../workspace/presentation/providers/workspace_provider.dart';
+import '../../../workspace/presentation/widgets/server_file_browser_sheet.dart';
 import '../providers/agent_chat_provider.dart';
 import '../widgets/chat_bubbles.dart';
 import '../widgets/prompt_composer_card.dart';
@@ -242,16 +242,16 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
                       ),
                       _PillBarAction(
                         icon: Icons.folder_copy_outlined,
+                        tooltip: 'File Explorer Server',
+                        onTap: () => showServerFileBrowserSheet(context),
+                      ),
+                      _PillBarAction(
+                        icon: Icons.compare_arrows_rounded,
                         tooltip: 'File berubah & diff',
                         badgeText: diffState.snapshot.hasChanges
                             ? '${diffState.snapshot.files.length}'
                             : null,
                         onTap: () => showGitDiffBottomSheet(context),
-                      ),
-                      _PillBarAction(
-                        icon: Icons.call_split_rounded,
-                        tooltip: 'Branch & repo',
-                        onTap: () => _showBranchSheet(context, chatState),
                       ),
                     ],
                   ),
@@ -427,81 +427,6 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
       body: EtherealBackground(child: content),
     );
   }
-
-  void _showBranchSheet(BuildContext context, AgentChatState chatState) {
-    final overview = ref.read(workspaceOverviewProvider);
-    showLiquidModalSheet<void>(
-      context: context,
-      maxHeightFactor: 0.72,
-      builder: (sheetCtx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Repository & Branch',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${chatState.repoFullName} di ${overview.hostStatus.hostName}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            ...overview.availableBranches.map((branch) {
-              final active = branch == chatState.branch;
-              return ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  Icons.call_split_rounded,
-                  color: active ? AppColors.primary : AppColors.textMuted,
-                ),
-                title: Text(
-                  branch,
-                  style: TextStyle(
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-                trailing: active
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          'Active',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryDark,
-                          ),
-                        ),
-                      )
-                    : null,
-                onTap: () {
-                  ref
-                      .read(agentChatProvider.notifier)
-                      .openOrCreateBranchSession(branch);
-                  Navigator.of(sheetCtx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Pindah ke branch $branch'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-              );
-            }),
-          ],
-        );
-      },
-    );
-  }
 }
 
 class _EmptyChatState extends StatelessWidget {
@@ -552,16 +477,23 @@ class _EmptyChatState extends StatelessWidget {
               alignment: WrapAlignment.center,
               children: _suggestions.map((prompt) {
                 return ActionChip(
-                  backgroundColor: Colors.white.withValues(alpha: 0.78),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232846).withValues(alpha: 0.85)
+                      : Colors.white.withValues(alpha: 0.78),
                   side: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.14)
+                        : Colors.white.withValues(alpha: 0.95),
                   ),
                   label: Text(
                     prompt,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFF2F3FF)
+                          : AppColors.textPrimary,
                     ),
                   ),
                   onPressed: isConnected ? () => onSelectPrompt(prompt) : null,
@@ -608,7 +540,13 @@ class _PillBarAction extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                Icon(icon, size: 19, color: AppColors.textPrimary),
+                Icon(
+                  icon,
+                  size: 19,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFF2F3FF)
+                      : AppColors.textPrimary,
+                ),
                 if (badgeText != null)
                   Positioned(
                     top: 3,

@@ -136,7 +136,7 @@ class GitDiffNotifier extends Notifier<GitDiffUiState> {
         await WynnBridgeClient().resetChanges(bridgeCfg);
         await refresh();
         state = state.copyWith(isBusy: false);
-        return 'Semua perubahan di PC host dibuang';
+        return 'Semua perubahan di Server dibuang';
       } catch (e) {
         state = state.copyWith(isBusy: false);
         return 'Gagal discard: ${e.toString().replaceFirst('Exception: ', '')}';
@@ -164,7 +164,7 @@ class GitDiffNotifier extends Notifier<GitDiffUiState> {
         await WynnBridgeClient().resetChanges(bridgeCfg, filePath: filePath);
         await refresh();
         state = state.copyWith(isBusy: false);
-        return 'File $filePath dikembalikan di PC host';
+        return 'File $filePath dikembalikan di Server';
       } catch (e) {
         state = state.copyWith(isBusy: false);
         return 'Gagal revert: ${e.toString().replaceFirst('Exception: ', '')}';

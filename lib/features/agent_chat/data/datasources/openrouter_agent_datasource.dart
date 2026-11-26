@@ -332,6 +332,9 @@ class OpenRouterAgentDatasource {
       final doneLogTime =
           '${doneNow.hour.toString().padLeft(2, '0')}:${doneNow.minute.toString().padLeft(2, '0')}:${doneNow.second.toString().padLeft(2, '0')}';
 
+      final estPromptTokens = (prompt.length / 4).ceil() + 120;
+      final estCompletionTokens = (finalText.length / 4).ceil() + 1;
+
       yield PromptStreamChunk(
         partialMessage: ChatMessage(
           id: msgId,
@@ -349,6 +352,13 @@ class OpenRouterAgentDatasource {
           command: '200 OK [$modelId]',
           detail: 'Selesai menerima ${finalText.length} karakter dari gateway',
           isSuccess: true,
+        ),
+        tokenUsage: TokenUsageDelta(
+          model: modelName,
+          promptTokens: estPromptTokens,
+          completionTokens: estCompletionTokens,
+          totalTokens: estPromptTokens + estCompletionTokens,
+          source: 'OpenRouter',
         ),
       );
     } on SocketException catch (e) {

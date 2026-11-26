@@ -71,10 +71,28 @@ class _EtherealBackgroundState extends State<EtherealBackground>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF0D1021) : AppColors.meshBase;
+    final blob1 = isDark
+        ? const Color(0xFF3E2A78).withValues(alpha: 0.72)
+        : AppColors.meshLavender.withValues(alpha: 0.92);
+    final blob2 = isDark
+        ? const Color(0xFF1A3A6E).withValues(alpha: 0.68)
+        : AppColors.meshSky.withValues(alpha: 0.90);
+    final blob3 = isDark
+        ? const Color(0xFF4B245C).withValues(alpha: 0.56)
+        : AppColors.meshPeach.withValues(alpha: 0.86);
+    final blob4 = isDark
+        ? const Color(0xFF28205F).withValues(alpha: 0.62)
+        : AppColors.meshLilac.withValues(alpha: 0.78);
+    final blob5 = isDark
+        ? const Color(0xFF153757).withValues(alpha: 0.58)
+        : AppColors.meshSky.withValues(alpha: 0.72);
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        const ColoredBox(color: AppColors.meshBase),
+        ColoredBox(color: baseColor),
         RepaintBoundary(
           child: AnimatedBuilder(
             animation: _controller,
@@ -93,42 +111,27 @@ class _EtherealBackgroundState extends State<EtherealBackground>
                   Positioned(
                     top: -95 + dy1,
                     left: -75 + dx1,
-                    child: _GlowBlob(
-                      size: 360,
-                      color: AppColors.meshLavender.withValues(alpha: 0.92),
-                    ),
+                    child: _GlowBlob(size: 360, color: blob1),
                   ),
                   Positioned(
                     top: -30 + dy2,
                     right: -95 + dx2,
-                    child: _GlowBlob(
-                      size: 340,
-                      color: AppColors.meshSky.withValues(alpha: 0.90),
-                    ),
+                    child: _GlowBlob(size: 340, color: blob2),
                   ),
                   Positioned(
                     top: (widget.intenseCenter ? 210 : 275) + dy3,
                     left: -80 + dx3,
-                    child: _GlowBlob(
-                      size: 330,
-                      color: AppColors.meshPeach.withValues(alpha: 0.86),
-                    ),
+                    child: _GlowBlob(size: 330, color: blob3),
                   ),
                   Positioned(
                     bottom: 80 - dy2,
                     right: -80 + dx1,
-                    child: _GlowBlob(
-                      size: 310,
-                      color: AppColors.meshLilac.withValues(alpha: 0.78),
-                    ),
+                    child: _GlowBlob(size: 310, color: blob4),
                   ),
                   Positioned(
                     bottom: -95 - dy1,
                     left: 30 - dx2,
-                    child: _GlowBlob(
-                      size: 340,
-                      color: AppColors.meshSky.withValues(alpha: 0.72),
-                    ),
+                    child: _GlowBlob(size: 340, color: blob5),
                   ),
                 ],
               );
@@ -139,7 +142,9 @@ class _EtherealBackgroundState extends State<EtherealBackground>
         BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
           child: Container(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: isDark
+                ? const Color(0xFF0A0D1C).withValues(alpha: 0.18)
+                : Colors.white.withValues(alpha: 0.08),
           ),
         ),
         widget.child,

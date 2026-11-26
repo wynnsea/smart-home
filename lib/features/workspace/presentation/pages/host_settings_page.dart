@@ -5,13 +5,19 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/network/wynn_bridge_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/motion_widgets.dart';
 import '../../../agent_chat/domain/entities/ai_gateway_entities.dart';
+import '../../../agent_chat/domain/entities/token_usage_entities.dart';
+import '../../../agent_chat/presentation/pages/token_usage_page.dart';
+import '../../../agent_chat/presentation/providers/agent_chat_provider.dart';
 import '../../../agent_chat/presentation/providers/ai_gateway_provider.dart';
+import '../../../agent_chat/presentation/providers/token_usage_provider.dart';
 import '../../../ai_avatar/presentation/widgets/avatar_debug_page.dart';
 import '../../domain/entities/workspace_entities.dart';
 import '../providers/workspace_provider.dart';
+import 'logs_page.dart';
 
 /// Host & Bridge configuration page with editable address/port validation,
 /// connection test, disconnect control, and collapsed developer endpoint info (T7.2).
@@ -269,7 +275,7 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                         .read(bridgeConfigProvider.notifier)
                         .update(token: v.trim()),
                     decoration: InputDecoration(
-                      labelText: 'Bridge Token (samakan dengan .env PC)',
+                      labelText: 'Bridge Token (samakan dengan .env Server)',
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.78),
                       border: OutlineInputBorder(
@@ -289,7 +295,7 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     title: const Text(
-                      'Aktifkan Remote Bridge (PC)',
+                      'Aktifkan Remote Bridge (Server)',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -297,7 +303,7 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                     ),
                     subtitle: Text(
                       ref.watch(bridgeConfigProvider).isActive
-                          ? 'Chat & Git Diff tersambung ke PC Host'
+                          ? 'Chat & Git Diff tersambung ke Server Host'
                           : 'Nonaktif (pakai OpenRouter langsung / Mock)',
                       style: const TextStyle(fontSize: 11.2),
                     ),
@@ -318,7 +324,8 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                     children: [
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: status.connectionState ==
+                          onPressed:
+                              status.connectionState ==
                                   HostConnectionState.connecting
                               ? null
                               : _testConnection,
@@ -329,7 +336,10 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          icon: const Icon(Icons.network_check_rounded, size: 18),
+                          icon: const Icon(
+                            Icons.network_check_rounded,
+                            size: 18,
+                          ),
                           label: Text(
                             status.connectionState ==
                                     HostConnectionState.connecting
@@ -340,7 +350,8 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                       ),
                       const SizedBox(width: 10),
                       OutlinedButton(
-                        onPressed: status.connectionState ==
+                        onPressed:
+                            status.connectionState ==
                                 HostConnectionState.disconnected
                             ? null
                             : () => ref
@@ -353,7 +364,9 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                             vertical: 12,
                           ),
                           side: BorderSide(
-                            color: AppColors.diffDelText.withValues(alpha: 0.35),
+                            color: AppColors.diffDelText.withValues(
+                              alpha: 0.35,
+                            ),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -382,10 +395,153 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
           const _AiGatewayCard(),
           const SizedBox(height: 14),
           GlassCard(
+            blur: false,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            child: SwitchListTile.adaptive(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.tintPurpleBg,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  ref.watch(darkModeProvider)
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  color: AppColors.tintPurpleFg,
+                  size: 20,
+                ),
+              ),
+              title: const Text(
+                'Midnight Glass (Dark Mode)',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                ref.watch(darkModeProvider)
+                    ? 'Tema gelap aktif untuk coding malam'
+                    : 'Tema Ethereal Pastel terang aktif',
+                style: const TextStyle(fontSize: 11.5),
+              ),
+              value: ref.watch(darkModeProvider),
+              activeTrackColor: AppColors.primary,
+              onChanged: (v) =>
+                  ref.read(darkModeProvider.notifier).setDarkMode(v),
+            ),
+          ),
+          const SizedBox(height: 14),
+          GlassCard(
+            blur: false,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            onTap: () => Navigator.of(context).push(
+              EtherealPageRoute<void>(builder: (_) => const TokenUsagePage()),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.tintBlueBg,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.data_usage_rounded,
+                    color: AppColors.tintBlueFg,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Konsumsi Token AI',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Hari ini: ${formatTokenCount(ref.watch(tokenUsageProvider).todayTotalTokens)} / ${formatTokenCount(ref.watch(tokenUsageProvider).dailyBudget)} (${ref.watch(tokenUsageProvider).budgetPercent}%)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          GlassCard(
+            blur: false,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            onTap: () => Navigator.of(
+              context,
+            ).push(EtherealPageRoute<void>(builder: (_) => const LogsPage())),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.terminal_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Terminal Logs',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        '${ref.watch(agentChatProvider).logs.length} event eksekusi & tool-call server',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          GlassCard(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             blur: false,
             child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(context)
+                  .copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.symmetric(horizontal: 4),
                 childrenPadding: const EdgeInsets.only(bottom: 8),
@@ -499,10 +655,12 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
   }
 
   void _saveConfig() {
-    ref.read(aiGatewayProvider.notifier).updateConfig(
-      baseUrl: _baseUrlController.text.trim(),
-      apiKey: _apiKeyController.text.trim(),
-    );
+    ref
+        .read(aiGatewayProvider.notifier)
+        .updateConfig(
+          baseUrl: _baseUrlController.text.trim(),
+          apiKey: _apiKeyController.text.trim(),
+        );
   }
 
   Future<void> _saveAndTest() async {
@@ -571,9 +729,8 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
                       'Multi-model & Multi-agent streaming',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 11.5,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -605,19 +762,28 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
             runSpacing: 6,
             children: [
               ActionChip(
-                label: const Text('OpenRouter', style: TextStyle(fontSize: 11.5)),
+                label: const Text(
+                  'OpenRouter',
+                  style: TextStyle(fontSize: 11.5),
+                ),
                 backgroundColor: AppColors.primarySoft,
                 onPressed: () => _applyPreset(kDefaultOpenRouterBaseUrl),
               ),
               ActionChip(
-                label: const Text('Gemini Compat', style: TextStyle(fontSize: 11.5)),
+                label: const Text(
+                  'Gemini Compat',
+                  style: TextStyle(fontSize: 11.5),
+                ),
                 backgroundColor: AppColors.surfaceSubtle,
                 onPressed: () => _applyPreset(
                   'https://generativelanguage.googleapis.com/v1beta/openai',
                 ),
               ),
               ActionChip(
-                label: const Text('Server Lokal', style: TextStyle(fontSize: 11.5)),
+                label: const Text(
+                  'Server Lokal',
+                  style: TextStyle(fontSize: 11.5),
+                ),
                 backgroundColor: AppColors.surfaceSubtle,
                 onPressed: () => _applyPreset('http://100.85.100.80:11434/v1'),
               ),
@@ -691,10 +857,9 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
             ),
             value: cfg.useLiveGateway,
             activeTrackColor: AppColors.primary,
-            onChanged: (v) =>
-                ref.read(aiGatewayProvider.notifier).updateConfig(
-                  useLiveGateway: v,
-                ),
+            onChanged: (v) => ref
+                .read(aiGatewayProvider.notifier)
+                .updateConfig(useLiveGateway: v),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -743,13 +908,11 @@ class _HostMetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -819,9 +982,8 @@ class _EndpointRow extends StatelessWidget {
               desc,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 11.2,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(fontSize: 11.2),
             ),
           ),
         ],

@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wynndiff/core/config/app_env.dart';
 import 'package:wynndiff/core/network/wynn_bridge_client.dart';
+import 'package:wynndiff/core/storage/app_local_storage.dart';
 import 'package:wynndiff/features/agent_chat/data/datasources/openrouter_agent_datasource.dart';
 import 'package:wynndiff/features/agent_chat/domain/entities/ai_gateway_entities.dart';
 import 'package:wynndiff/features/agent_chat/domain/entities/chat_entities.dart';
@@ -134,6 +136,75 @@ void main() {
       expect(snap.files.first.status, equals(DiffFileStatus.modified));
       expect(snap.files.first.lines.length, equals(3));
       expect(snap.files.first.lines.first.type, equals(DiffLineType.hunkHeader));
+    });
+
+    test('AppLocalStorage persists and restores BridgeConfig, AiGatewayConfig, and ChatSessions', () async {
+      SharedPreferences.setMockInitialValues({});
+      await AppLocalStorage.init();
+      addTearDown(() => AppLocalStorage.setInstanceForTest(null));
+
+      await AppLocalStorage.saveBridgeConfig(
+        const BridgeConfig(
+          hostAddress: '100.85.100.80',
+          hostPort: 8787,
+          token: 'rahasia123',
+          enabled: true,
+        ),
+      );
+      final restoredBridge = AppLocalStorage.loadBridgeConfig(
+        fallback: const BridgeConfig(),
+      );
+      expect(restoredBridge.hostAddress, equals('100.85.100.80'));
+      expect(restoredBridge.token, equals('rahasia123'));
+      expect(restoredBridge.enabled, isTrue);
+
+      await AppLocalStorage.saveChatSnapshot(
+        sessions: const [
+          ChatSession(
+            id: 's1',
+            title: 'Cek wynndev',
+            repoFullName: 'wynnsea/wynndev',
+            branch: 'main',
+            updatedAt: 'Baru saja',
+            messages: [
+              ChatMessage(
+                id: 'm1',
+                isUser: true,
+                timestampLabel: '21:10',
+                text: 'Halo Wynn',
+              ),
+              ChatMessage(
+                id: 'm2',
+                isUser: false,
+                timestampLabel: '21:10',
+                text: 'Halo Wayan!',
+                isStreaming: true,
+              ),
+            ],
+            logs: [
+              ExecutionLogEntry(
+                time: '21:10:01',
+                command: 'list_files',
+                detail: '5 file',
+                isSuccess: true,
+              ),
+            ],
+          ),
+        ],
+        activeSessionId: 's1',
+        mode: AgentMode.investigate,
+        selectedModel: 'Nemotron 3 Ultra 550B',
+        selectedAgentId: 'bug-hunter',
+      );
+
+      final restoredChat = AppLocalStorage.loadChatSnapshot();
+      expect(restoredChat, isNotNull);
+      expect(restoredChat!.sessions.length, equals(1));
+      expect(restoredChat.sessions.first.messages.length, equals(2));
+      expect(restoredChat.sessions.first.messages.last.isStreaming, isFalse);
+      expect(restoredChat.mode, equals(AgentMode.investigate));
+      expect(restoredChat.selectedModel, equals('Nemotron 3 Ultra 550B'));
+      expect(restoredChat.selectedAgentId, equals('bug-hunter'));
     });
   });
 }

@@ -66,11 +66,31 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
+      // Open Repos tab via bottom nav
+      await tester.tap(find.byIcon(Icons.folder_open_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('Repositories'), findsOneWidget);
+
       // Open Diff tab via bottom nav
       await tester.tap(find.byIcon(Icons.difference_outlined));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       expect(find.text('Working tree bersih'), findsOneWidget);
+
+      // Open Host tab -> open Terminal Logs inside Host
+      await tester.tap(find.byIcon(Icons.dns_outlined));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.drag(find.byType(ListView).first, const Offset(0, -600));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Terminal Logs'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 450));
+      expect(find.text('Belum ada log eksekusi'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.chevron_left_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
       // Back to Home and open Agent Hub via Active Host Session hero card
       await tester.tap(find.byIcon(Icons.home_rounded));

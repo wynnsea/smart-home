@@ -62,6 +62,67 @@ abstract final class AppTheme {
     );
   }
 
+  static ThemeData dark() {
+    final fontFamily = GoogleFonts.plusJakartaSans().fontFamily;
+    const textPrimary = Color(0xFFF2F3FF);
+    const textSecondary = Color(0xFFA2A8C9);
+    const primaryAccent = Color(0xFF9E7BFF);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: fontFamily,
+      scaffoldBackgroundColor: const Color(0xFF0D1021),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryAccent,
+        brightness: Brightness.dark,
+        primary: primaryAccent,
+        surface: const Color(0xFF171B30),
+      ),
+      textTheme: TextTheme(
+        headlineMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
+          color: textPrimary,
+        ),
+        titleLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+          color: textPrimary,
+        ),
+        titleMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+        ),
+        bodyMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 13.5,
+          height: 1.48,
+          color: textPrimary,
+        ),
+        bodySmall: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          height: 1.4,
+          color: textSecondary,
+        ),
+        labelMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textSecondary,
+        ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        foregroundColor: textPrimary,
+      ),
+      dividerColor: const Color(0xFF282E4C),
+    );
+  }
+
   static TextStyle monoStyle({
     double fontSize = 12,
     FontWeight fontWeight = FontWeight.w500,

@@ -1,14 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/storage/app_local_storage.dart';
 import '../../data/datasources/openrouter_agent_datasource.dart';
 import '../../domain/entities/ai_gateway_entities.dart';
 
 /// Holds the active OpenAI-compatible AI Gateway configuration (default: OpenRouter).
-/// Users can configure API Key & Base URL at runtime in HostSettingsPage or
-/// via `--dart-define=OPENROUTER_API_KEY=...`.
+/// Automatically restores saved settings from [AppLocalStorage] and persists updates.
 class AiGatewayNotifier extends Notifier<AiGatewayConfig> {
   @override
-  AiGatewayConfig build() => AiGatewayConfig.fromEnvironment();
+  AiGatewayConfig build() {
+    return AppLocalStorage.loadAiGatewayConfig(
+      fallback: AiGatewayConfig.fromEnvironment(),
+    );
+  }
 
   void updateConfig({
     String? baseUrl,
@@ -20,10 +26,12 @@ class AiGatewayNotifier extends Notifier<AiGatewayConfig> {
       apiKey: apiKey?.trim(),
       useLiveGateway: useLiveGateway,
     );
+    unawaited(AppLocalStorage.saveAiGatewayConfig(state));
   }
 
   void applyGatewayPreset(String baseUrl) {
     state = state.copyWith(baseUrl: baseUrl.trim());
+    unawaited(AppLocalStorage.saveAiGatewayConfig(state));
   }
 
   Future<GatewayTestResult> testConnection() {

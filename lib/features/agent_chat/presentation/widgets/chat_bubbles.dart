@@ -686,11 +686,11 @@ class _MiniActionIcon extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
             child: Center(
               child: Icon(
                 icon,
-                size: 17,
+                size: 16.5,
                 color: color ?? AppColors.textMuted,
               ),
             ),

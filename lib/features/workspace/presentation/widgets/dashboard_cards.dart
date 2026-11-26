@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../core/network/wynn_bridge_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/motion_widgets.dart';
@@ -9,19 +10,25 @@ import '../../../ai_avatar/domain/avatar_mood.dart';
 import '../../../ai_avatar/presentation/widgets/wynn_ai_avatar.dart';
 import '../../domain/entities/workspace_entities.dart';
 
-/// Hero status card at the top of Home Dashboard with animated progress sweep,
-/// pulsing online beacon, Hero-linked AI orb, and springy tap response.
+/// Hero status card at the top of Home Dashboard with live server telemetry
+/// (CPU, RAM, Disk, Uptime), pulsing online beacon, Hero-linked AI orb, and springy tap response.
 class HostHeroCard extends StatelessWidget {
   const HostHeroCard({
     super.key,
     required this.status,
     required this.changedFilesCount,
     required this.onTap,
+    this.systemStats,
+    this.tokenBudgetProgress = 0,
+    this.tokenUsageLabel = '',
   });
 
   final HostStatus status;
   final int changedFilesCount;
   final VoidCallback onTap;
+  final SystemStats? systemStats;
+  final double tokenBudgetProgress;
+  final String tokenUsageLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -74,62 +81,98 @@ class HostHeroCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: status.progress),
-                    duration: const Duration(milliseconds: 900),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, animatedProgress, _) {
-                      final pct = (animatedProgress * 100).round();
-                      return Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${status.completedTasks} / ${status.totalTasks} checks',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                  const SizedBox(height: 10),
+                  if (systemStats != null && systemStats!.hasTelemetry)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _TelemetryChip(
+                          label: 'CPU ${systemStats!.cpuPercent.round()}%',
+                          color: AppColors.tintBlueFg,
+                          bg: AppColors.tintBlueBg,
+                        ),
+                        _TelemetryChip(
+                          label:
+                              'RAM ${systemStats!.memUsedGb}/${systemStats!.memTotalGb}G',
+                          color: AppColors.tintPurpleFg,
+                          bg: AppColors.tintPurpleBg,
+                        ),
+                        _TelemetryChip(
+                          label: 'Disk ${systemStats!.diskPercent.round()}%',
+                          color: AppColors.tintAmberFg,
+                          bg: AppColors.tintAmberBg,
+                        ),
+                        if (systemStats!.uptimeLabel.isNotEmpty)
+                          _TelemetryChip(
+                            label: 'Up ${systemStats!.uptimeLabel}',
+                            color: AppColors.tintGreenFg,
+                            bg: AppColors.tintGreenBg,
+                          ),
+                      ],
+                    )
+                  else
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: tokenBudgetProgress),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, animatedProgress, _) {
+                        final pct = (animatedProgress * 100).round();
+                        return Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    tokenUsageLabel.isNotEmpty
+                                        ? tokenUsageLabel
+                                        : 'Branch: ${status.branch}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.color,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '$pct%',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                                const SizedBox(width: 6),
+                                Text(
+                                  '$pct%',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(99),
-                            child: Container(
-                              height: 8.5,
-                              color: AppColors.primarySoft,
-                              alignment: Alignment.centerLeft,
-                              child: FractionallySizedBox(
-                                widthFactor: animatedProgress.clamp(0.0, 1.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: AppColors.progressGradient,
-                                    borderRadius: BorderRadius.circular(99),
+                              ],
+                            ),
+                            const SizedBox(height: 7),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(99),
+                              child: Container(
+                                height: 8,
+                                color: AppColors.primarySoft,
+                                alignment: Alignment.centerLeft,
+                                child: FractionallySizedBox(
+                                  widthFactor: animatedProgress.clamp(0.0, 1.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.progressGradient,
+                                      borderRadius: BorderRadius.circular(99),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                          ],
+                        );
+                      },
+                    ),
                   const SizedBox(height: 11),
                   Text(
                     status.isConnected
@@ -194,6 +237,37 @@ class HostHeroCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TelemetryChip extends StatelessWidget {
+  const _TelemetryChip({
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
+
+  final String label;
+  final Color color;
+  final Color bg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.8,
+          fontWeight: FontWeight.w700,
+          color: color,
         ),
       ),
     );
@@ -626,6 +700,7 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
     final items = [
       (Icons.home_rounded, 'Home', 0),
+      (Icons.folder_open_rounded, 'Repos', 4),
       (Icons.difference_outlined, 'Diff', 2),
       (Icons.dns_outlined, 'Host', 3),
     ];
@@ -636,14 +711,14 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         child: Row(
           children: [
             Expanded(
               child: LiquidGlassPill(
                 height: 64,
                 blurSigma: 28,
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final slotWidth = constraints.maxWidth / items.length;
@@ -655,10 +730,10 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                               ? Duration.zero
                               : const Duration(milliseconds: 340),
                           curve: Curves.easeOutBack,
-                          left: activeSlot * slotWidth + 3,
+                          left: activeSlot * slotWidth + 2,
                           top: 2,
                           bottom: 2,
-                          width: slotWidth - 6,
+                          width: slotWidth - 4,
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(999),
