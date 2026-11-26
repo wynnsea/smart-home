@@ -9,10 +9,11 @@ import '../../domain/avatar_mood.dart';
 import '../controllers/avatar_frame.dart';
 import '../controllers/avatar_motion_controller.dart';
 
-/// 3D soft-clay / matte toy procedural CustomPainter for "Wynn" v2 —
-/// original chibi anime girl with messy brown side bun, swept curtain bangs,
-/// oversized lavender hoodie, glossy anime eyes, bouncy ahoge, and glowing
-/// star hair clip. Zero black outlines; all depth via soft gradients & rim light.
+/// Pixar-style 3D soft-shaded CustomPainter for "Wynn" matching the user's
+/// reference character: glossy jet-black wavy chin-length bob with deep
+/// side-swept bangs, matte-black round-wayfarer glasses with lens sheen,
+/// big winged-eyeliner espresso eyes, rosy button nose, coral lips, and
+/// cream-white ribbed crewneck sweater with navy-blue horizontal stripes.
 class ChibiBodyPainter extends CustomPainter {
   ChibiBodyPainter({
     this.motionController,
@@ -41,16 +42,12 @@ class ChibiBodyPainter extends CustomPainter {
         headTilt: expression.headTilt,
       );
 
-  // Reusable Paint instances (zero per-frame allocations in paint())
+  // Reusable Paint instances (zero per-frame allocations)
   final Paint _shadowPaint = Paint()
     ..style = PaintingStyle.fill
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
   final Paint _fillPaint = Paint()..style = PaintingStyle.fill;
   final Paint _shadePaint = Paint()..style = PaintingStyle.fill;
-  final Paint _rimPaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeCap = StrokeCap.round
-    ..color = Colors.white.withValues(alpha: 0.26);
   final Paint _strokePaint = Paint()
     ..style = PaintingStyle.stroke
     ..strokeCap = StrokeCap.round
@@ -61,13 +58,13 @@ class ChibiBodyPainter extends CustomPainter {
   // Cached size-dependent shaders
   Size? _cachedSize;
   Shader? _hairBackShader;
-  Shader? _bunShader;
-  Shader? _bangsShader;
-  Shader? _hoodieShader;
-  Shader? _hoodieShadeShader;
+  Shader? _hairFrontShader;
+  Shader? _sweaterShader;
   Shader? _faceShader;
+  Shader? _neckShader;
   Shader? _irisShader;
   Shader? _skinHandShader;
+  Shader? _noseShader;
 
   void _ensureShaders(Size size) {
     if (_cachedSize == size) return;
@@ -75,98 +72,104 @@ class ChibiBodyPainter extends CustomPainter {
     final s = size.shortestSide;
 
     _hairBackShader = const RadialGradient(
-      center: Alignment(-0.35, -0.45),
-      radius: 1.05,
+      center: Alignment(-0.28, -0.48),
+      radius: 1.08,
       colors: [
-        AppColors.avatarHairHighlight,
+        Color(0xFF3E4357),
         AppColors.avatarHair,
         AppColors.avatarHairShade,
       ],
-      stops: [0.0, 0.52, 1.0],
-    ).createShader(Rect.fromLTWH(s * 0.14, s * 0.12, s * 0.72, s * 0.72));
+      stops: [0.0, 0.42, 1.0],
+    ).createShader(Rect.fromLTWH(s * 0.12, s * 0.06, s * 0.76, s * 0.72));
 
-    _bunShader = const RadialGradient(
-      center: Alignment(-0.4, -0.45),
-      radius: 0.95,
-      colors: [
-        AppColors.avatarHairHighlight,
-        AppColors.avatarHair,
-        AppColors.avatarHairShade,
-      ],
-      stops: [0.0, 0.55, 1.0],
-    ).createShader(
-      Rect.fromCircle(center: Offset(s * 0.34, s * 0.15), radius: s * 0.16),
-    );
-
-    _bangsShader = const LinearGradient(
+    _hairFrontShader = const LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        AppColors.avatarHairHighlight,
+        Color(0xFF454B63),
         AppColors.avatarHair,
         AppColors.avatarHairShade,
       ],
-      stops: [0.0, 0.55, 1.0],
-    ).createShader(Rect.fromLTWH(s * 0.16, s * 0.10, s * 0.68, s * 0.56));
+      stops: [0.0, 0.48, 1.0],
+    ).createShader(Rect.fromLTWH(s * 0.16, s * 0.08, s * 0.68, s * 0.56));
 
-    _hoodieShader = const RadialGradient(
-      center: Alignment(-0.45, -0.55),
-      radius: 1.15,
+    _sweaterShader = const RadialGradient(
+      center: Alignment(0.0, -0.45),
+      radius: 1.10,
       colors: [
         AppColors.avatarHoodLight,
         AppColors.avatarHood,
         AppColors.avatarHoodDark,
       ],
-      stops: [0.0, 0.62, 1.0],
-    ).createShader(Rect.fromLTWH(s * 0.12, s * 0.58, s * 0.76, s * 0.42));
-
-    _hoodieShadeShader = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        AppColors.avatarHoodDark.withValues(alpha: 0.28),
-        AppColors.avatarHoodDark.withValues(alpha: 0.0),
-      ],
-    ).createShader(Rect.fromLTWH(s * 0.25, s * 0.60, s * 0.50, s * 0.16));
+      stops: [0.0, 0.68, 1.0],
+    ).createShader(Rect.fromLTWH(s * 0.16, s * 0.66, s * 0.68, s * 0.34));
 
     _faceShader = const RadialGradient(
-      center: Alignment(-0.32, -0.38),
-      radius: 0.96,
+      center: Alignment(-0.12, -0.22),
+      radius: 0.92,
       colors: [
-        Color(0xFFFFF0E6),
+        Color(0xFFFFEFE3),
         AppColors.avatarSkin,
         AppColors.avatarSkinShade,
       ],
-      stops: [0.0, 0.56, 1.0],
+      stops: [0.0, 0.58, 1.0],
     ).createShader(
       Rect.fromCenter(
         center: Offset(s * 0.50, s * 0.41),
-        width: s * 0.56,
-        height: s * 0.52,
+        width: s * 0.48,
+        height: s * 0.48,
       ),
     );
+
+    _neckShader = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color(0xFFD4927B),
+        AppColors.avatarSkin,
+        Color(0xFFF3C2A8),
+      ],
+      stops: [0.0, 0.52, 1.0],
+    ).createShader(Rect.fromLTWH(s * 0.41, s * 0.59, s * 0.18, s * 0.16));
 
     _irisShader = const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        AppColors.avatarHairShade,
+        Color(0xFF1A100D),
         AppColors.avatarIris,
         AppColors.avatarIrisLight,
       ],
-      stops: [0.0, 0.45, 1.0],
-    ).createShader(Rect.fromLTWH(0, -s * 0.06, s * 0.10, s * 0.12));
+      stops: [0.0, 0.52, 1.0],
+    ).createShader(Rect.fromLTWH(0, -s * 0.055, s * 0.10, s * 0.11));
 
     _skinHandShader = const RadialGradient(
-      center: Alignment(-0.35, -0.4),
+      center: Alignment(-0.3, -0.35),
       radius: 0.95,
       colors: [
-        Color(0xFFFFEFE5),
+        Color(0xFFFFEFE3),
         AppColors.avatarSkin,
         AppColors.avatarSkinShade,
       ],
-      stops: [0.0, 0.62, 1.0],
-    ).createShader(Rect.fromCircle(center: Offset.zero, radius: s * 0.095));
+      stops: [0.0, 0.60, 1.0],
+    ).createShader(Rect.fromCircle(center: Offset.zero, radius: s * 0.085));
+
+    _noseShader = const RadialGradient(
+      center: Alignment(-0.25, -0.35),
+      radius: 0.95,
+      colors: [
+        Color(0xFFFFC1B2),
+        Color(0xFFF19582),
+        Color(0xFFD87968),
+      ],
+      stops: [0.0, 0.58, 1.0],
+    ).createShader(
+      Rect.fromCenter(
+        center: Offset(s * 0.50, s * 0.478),
+        width: s * 0.072,
+        height: s * 0.048,
+      ),
+    );
   }
 
   @override
@@ -183,13 +186,13 @@ class ChibiBodyPainter extends CustomPainter {
     }
     _applyFraming(canvas, s);
 
-    // 1. Contact shadow (standing only, omitted in xs bust close-up & peek)
+    // 1. Contact shadow
     if (poseMode == AvatarPoseMode.standing && avatarSize != AvatarSize.xs) {
       _drawContactShadow(canvas, s);
     }
 
-    // Body root transform: float, shake, squash/stretch, breathing
-    final bodyPivot = Offset(s * 0.50, s * 0.78);
+    // Body root transform
+    final bodyPivot = Offset(s * 0.50, s * 0.80);
     canvas.save();
     canvas.translate(frame.shakeX * s, frame.floatY * s);
     canvas.translate(bodyPivot.dx, bodyPivot.dy);
@@ -199,20 +202,19 @@ class ChibiBodyPainter extends CustomPainter {
     );
     canvas.translate(-bodyPivot.dx, -bodyPivot.dy);
 
-    // 2. Back hair & 3. High messy side bun (drawn behind body/shoulders)
-    final headPivot = Offset(s * 0.50, s * 0.58);
+    // 2. Back glossy black wavy bob silhouette (behind shoulders & neck)
+    final headPivot = Offset(s * 0.50, s * 0.62);
     canvas.save();
     canvas.translate(headPivot.dx, headPivot.dy);
     canvas.rotate(frame.headTiltZ);
     canvas.translate(-headPivot.dx, -headPivot.dy);
     _drawHairBack(canvas, s, sway);
-    _drawBun(canvas, s, sway);
     canvas.restore();
 
-    // 4. Hoodie body (clipped softly at bottom edge when peeking over a card)
+    // 3. Cream knit crewneck sweater with navy horizontal stripe
     _drawBody(canvas, s);
 
-    // 5..14. Head & facial stack rotated around neck pivot
+    // 4..13. Head, face, eyes, glasses, glossy bob bangs & mood accent
     canvas.save();
     canvas.translate(headPivot.dx, headPivot.dy);
     canvas.rotate(frame.headTiltZ);
@@ -225,24 +227,23 @@ class ChibiBodyPainter extends CustomPainter {
     _drawBrows(canvas, s);
     _drawNose(canvas, s);
     _drawMouth(canvas, s);
-    _drawBangs(canvas, s, sway);
-    _drawAhogeAndClip(canvas, s, sway);
+    _drawGlasses(canvas, s);
+    _drawBangsAndBobSides(canvas, s, sway);
+    _drawMoodAccent(canvas, s, sway);
 
     canvas.restore();
 
-    // 15. Arms & chunky lavender hoodie cuffs
+    // 14. Arms & cream/navy-striped sleeves
     _drawArms(canvas, s);
 
     canvas.restore();
     canvas.restore();
   }
 
-  /// Framing per size (§2.8): `xs` bust close-up (~90% head), `sm` head+shoulders,
-  /// `md`/`lg` full half-body.
   void _applyFraming(Canvas canvas, double s) {
     switch (avatarSize) {
       case AvatarSize.xs:
-        const scale = 1.48;
+        const scale = 1.46;
         canvas.translate(s * 0.50, s * 0.52);
         canvas.scale(scale, scale);
         canvas.translate(-s * 0.50, -s * 0.41);
@@ -261,201 +262,191 @@ class ChibiBodyPainter extends CustomPainter {
   void _drawContactShadow(Canvas canvas, double s) {
     final lift = (-frame.floatY).clamp(-0.04, 0.06);
     final shadowScale = (1.0 - lift * 3.0).clamp(0.76, 1.12);
-    final shadowAlpha = (0.14 - lift * 0.7).clamp(0.07, 0.18);
+    final shadowAlpha = (0.12 - lift * 0.6).clamp(0.06, 0.16);
     _shadowPaint.color = AppColors.avatarInk.withValues(alpha: shadowAlpha);
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(s * 0.50 + frame.shakeX * s * 0.4, s * 0.955),
-        width: s * 0.62 * shadowScale,
-        height: s * 0.075 * shadowScale,
+        center: Offset(s * 0.50 + frame.shakeX * s * 0.4, s * 0.96),
+        width: s * 0.56 * shadowScale,
+        height: s * 0.065 * shadowScale,
       ),
       _shadowPaint,
     );
   }
 
+  /// Glossy jet-black wavy chin-length bob silhouette curving smoothly outward
+  /// around cheeks and tucking softly inward beneath jaw level.
   void _drawHairBack(Canvas canvas, double s, Offset sway) {
-    final pivot = Offset(s * 0.50, s * 0.28);
+    final pivot = Offset(s * 0.50, s * 0.24);
     canvas.save();
     canvas.translate(pivot.dx, pivot.dy);
-    canvas.rotate(-sway.dx * 1.0);
-    canvas.translate(-pivot.dx, -pivot.dy + sway.dy * s * 0.35);
+    canvas.rotate(-sway.dx * 0.9);
+    canvas.translate(-pivot.dx, -pivot.dy + sway.dy * s * 0.30);
 
-    final path = Path()
-      ..moveTo(s * 0.21, s * 0.36)
-      ..cubicTo(s * 0.17, s * 0.20, s * 0.32, s * 0.11, s * 0.50, s * 0.12)
-      ..cubicTo(s * 0.69, s * 0.11, s * 0.83, s * 0.21, s * 0.79, s * 0.38)
-      ..cubicTo(s * 0.82, s * 0.52, s * 0.81, s * 0.67, s * 0.73, s * 0.73)
-      ..quadraticBezierTo(s * 0.64, s * 0.78, s * 0.55, s * 0.72)
-      ..quadraticBezierTo(s * 0.48, s * 0.77, s * 0.40, s * 0.72)
-      ..quadraticBezierTo(s * 0.28, s * 0.77, s * 0.22, s * 0.67)
-      ..cubicTo(s * 0.17, s * 0.57, s * 0.19, s * 0.46, s * 0.21, s * 0.36)
+    final bob = Path()
+      ..moveTo(s * 0.56, s * 0.115)
+      // Right side dome & wavy bob flare
+      ..cubicTo(s * 0.72, s * 0.085, s * 0.78, s * 0.27, s * 0.80, s * 0.44)
+      ..cubicTo(s * 0.84, s * 0.54, s * 0.85, s * 0.66, s * 0.76, s * 0.72)
+      ..cubicTo(s * 0.68, s * 0.76, s * 0.60, s * 0.73, s * 0.56, s * 0.69)
+      // Across behind neck
+      ..lineTo(s * 0.44, s * 0.69)
+      // Left side wavy bob tuck & flare
+      ..cubicTo(s * 0.40, s * 0.74, s * 0.31, s * 0.76, s * 0.23, s * 0.71)
+      ..cubicTo(s * 0.15, s * 0.65, s * 0.16, s * 0.54, s * 0.21, s * 0.44)
+      ..cubicTo(s * 0.23, s * 0.26, s * 0.30, s * 0.075, s * 0.56, s * 0.115)
       ..close();
 
     _fillPaint
       ..shader = _hairBackShader
       ..color = AppColors.avatarHair;
-    canvas.drawPath(path, _fillPaint);
+    canvas.drawPath(bob, _fillPaint);
     _fillPaint.shader = null;
 
-    // Subtle soft white top-left rim light on crown
-    _rimPaint.strokeWidth = (s * 0.014).clamp(0.8, 2.6);
-    final rimPath = Path()
-      ..moveTo(s * 0.24, s * 0.31)
-      ..quadraticBezierTo(s * 0.29, s * 0.16, s * 0.47, s * 0.14);
-    canvas.drawPath(rimPath, _rimPaint);
+    // Silky curved Pixar sheen arcs on upper crown & lower bob waves
+    _strokePaint
+      ..color = AppColors.avatarHairHighlight.withValues(alpha: 0.48)
+      ..strokeWidth = (s * 0.022).clamp(1.2, 4.2);
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.28, s * 0.27)
+        ..quadraticBezierTo(s * 0.36, s * 0.13, s * 0.54, s * 0.13),
+      _strokePaint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.61, s * 0.14)
+        ..quadraticBezierTo(s * 0.72, s * 0.22, s * 0.76, s * 0.40),
+      _strokePaint,
+    );
+
+    _strokePaint
+      ..color = AppColors.avatarHairHighlight.withValues(alpha: 0.34)
+      ..strokeWidth = (s * 0.018).clamp(1.0, 3.2);
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.21, s * 0.56)
+        ..quadraticBezierTo(s * 0.22, s * 0.67, s * 0.31, s * 0.71),
+      _strokePaint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.79, s * 0.56)
+        ..quadraticBezierTo(s * 0.79, s * 0.67, s * 0.70, s * 0.71),
+      _strokePaint,
+    );
 
     canvas.restore();
   }
 
-  void _drawBun(Canvas canvas, double s, Offset sway) {
-    final basePivot = Offset(s * 0.38, s * 0.21);
-    canvas.save();
-    canvas.translate(basePivot.dx, basePivot.dy);
-    canvas.rotate(-sway.dx * 0.7);
-    canvas.translate(-basePivot.dx, -basePivot.dy + sway.dy * s * 0.28);
-
-    // Messy loose wisps flicking playfully off the bun
-    _strokePaint
-      ..color = AppColors.avatarHair
-      ..strokeWidth = (s * 0.022).clamp(1.2, 4.0);
-    final wispLeft = Path()
-      ..moveTo(s * 0.25, s * 0.18)
-      ..quadraticBezierTo(s * 0.15, s * 0.17, s * 0.15, s * 0.09);
-    canvas.drawPath(wispLeft, _strokePaint);
-
-    _strokePaint.strokeWidth = (s * 0.016).clamp(0.9, 3.0);
-    final wispTop = Path()
-      ..moveTo(s * 0.33, s * 0.07)
-      ..quadraticBezierTo(s * 0.38, s * 0.02, s * 0.44, s * 0.05);
-    canvas.drawPath(wispTop, _strokePaint);
-
-    // Main sculpted clay bun silhouette (oval tilted slightly left)
-    canvas.save();
-    canvas.translate(s * 0.33, s * 0.145);
-    canvas.rotate(-0.34);
-    final bunRect = Rect.fromCenter(
-      center: Offset.zero,
-      width: s * 0.27,
-      height: s * 0.21,
-    );
-    _fillPaint
-      ..shader = _bunShader
-      ..color = AppColors.avatarHair;
-    canvas.drawOval(bunRect, _fillPaint);
-    _fillPaint.shader = null;
-
-    // Sculpted clay hair coil grooves (soft darker brown + light sheen bands)
-    _strokePaint
-      ..color = AppColors.avatarHairShade.withValues(alpha: 0.45)
-      ..strokeWidth = (s * 0.015).clamp(0.8, 2.8);
-    canvas.drawArc(
-      bunRect.deflate(s * 0.028),
-      -math.pi * 0.85,
-      math.pi * 0.95,
-      false,
-      _strokePaint,
-    );
-    canvas.drawArc(
-      bunRect.deflate(s * 0.055),
-      math.pi * 0.12,
-      math.pi * 0.72,
-      false,
-      _strokePaint,
-    );
-
-    _strokePaint
-      ..color = AppColors.avatarHairHighlight.withValues(alpha: 0.55)
-      ..strokeWidth = (s * 0.016).clamp(0.8, 3.0);
-    canvas.drawArc(
-      bunRect.deflate(s * 0.036),
-      -math.pi * 0.78,
-      math.pi * 0.52,
-      false,
-      _strokePaint,
-    );
-    canvas.restore();
-
-    canvas.restore();
-  }
-
+  /// Cream-white ribbed crewneck knit sweater with crisp navy horizontal chest stripe.
   void _drawBody(Canvas canvas, double s) {
     final isPeek = poseMode == AvatarPoseMode.peek;
-    final bottomY = isPeek ? s * 0.87 : s * 0.94;
+    final bottomY = isPeek ? s * 0.87 : s * 0.96;
+
     if (isPeek) {
       canvas.save();
       canvas.clipRect(Rect.fromLTRB(0, 0, s, s * 0.865));
     }
-    // Back hood collar rim hugging shoulders
-    final hoodRim = Path()
-      ..moveTo(s * 0.22, s * 0.68)
-      ..quadraticBezierTo(s * 0.30, s * 0.56, s * 0.50, s * 0.58)
-      ..quadraticBezierTo(s * 0.70, s * 0.56, s * 0.78, s * 0.68)
-      ..quadraticBezierTo(s * 0.64, s * 0.75, s * 0.50, s * 0.74)
-      ..quadraticBezierTo(s * 0.36, s * 0.75, s * 0.22, s * 0.68)
-      ..close();
-    _fillPaint
-      ..shader = _hoodieShader
-      ..color = AppColors.avatarHood;
-    canvas.drawPath(hoodRim, _fillPaint);
 
-    // Main oversized lavender hoodie torso (shoulder width ~0.62s)
     final torso = Path()
-      ..moveTo(s * 0.19, bottomY)
-      ..cubicTo(s * 0.18, s * 0.76, s * 0.23, s * 0.63, s * 0.36, s * 0.61)
-      ..lineTo(s * 0.64, s * 0.61)
-      ..cubicTo(s * 0.77, s * 0.63, s * 0.82, s * 0.76, s * 0.81, bottomY)
-      ..quadraticBezierTo(s * 0.50, bottomY + s * 0.03, s * 0.19, bottomY)
+      ..moveTo(s * 0.21, bottomY)
+      ..cubicTo(s * 0.22, s * 0.80, s * 0.26, s * 0.72, s * 0.39, s * 0.705)
+      ..lineTo(s * 0.61, s * 0.705)
+      ..cubicTo(s * 0.74, s * 0.72, s * 0.78, s * 0.80, s * 0.79, bottomY)
       ..close();
+
+    _fillPaint
+      ..shader = _sweaterShader
+      ..color = AppColors.avatarHood;
     canvas.drawPath(torso, _fillPaint);
     _fillPaint.shader = null;
 
-    // Soft cast shadow under chin onto hoodie collar
-    _shadePaint.shader = _hoodieShadeShader;
+    // Clip navy horizontal chest stripe & subtle knit shoulder shading inside torso
+    canvas.save();
+    canvas.clipPath(torso);
+
+    // Signature deep navy-blue chest stripe
+    _fillPaint.color = AppColors.avatarSweaterStripe;
+    final stripePath = Path()
+      ..moveTo(s * 0.26, s * 0.835)
+      ..quadraticBezierTo(s * 0.50, s * 0.822, s * 0.74, s * 0.835)
+      ..lineTo(s * 0.75, s * 0.885)
+      ..quadraticBezierTo(s * 0.50, s * 0.872, s * 0.25, s * 0.885)
+      ..close();
+    canvas.drawPath(stripePath, _fillPaint);
+
+    // Matching lower sleeve stripes on left & right shoulders
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(s * 0.19, s * 0.915, s * 0.13, s * 0.032),
+        Radius.circular(s * 0.01),
+      ),
+      _fillPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(s * 0.68, s * 0.915, s * 0.13, s * 0.032),
+        Radius.circular(s * 0.01),
+      ),
+      _fillPaint,
+    );
+
+    // Soft ambient shadow cast by bob hair onto upper sweater shoulders
+    _shadePaint.color = AppColors.avatarHoodDark.withValues(alpha: 0.42);
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(s * 0.50, s * 0.65),
-        width: s * 0.34,
-        height: s * 0.12,
+        center: Offset(s * 0.31, s * 0.73),
+        width: s * 0.18,
+        height: s * 0.08,
       ),
       _shadePaint,
     );
-    _shadePaint.shader = null;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(s * 0.69, s * 0.73),
+        width: s * 0.18,
+        height: s * 0.08,
+      ),
+      _shadePaint,
+    );
+    canvas.restore();
 
-    // Rounded sculpted hoodie collar folds (V-overlap like reference photo)
+    // Ribbed cream crewneck collar band
+    final collarPath = Path()
+      ..moveTo(s * 0.395, s * 0.702)
+      ..quadraticBezierTo(s * 0.50, s * 0.785, s * 0.605, s * 0.702);
     _strokePaint
-      ..color = AppColors.avatarHoodDark.withValues(alpha: 0.42)
-      ..strokeWidth = (s * 0.016).clamp(1.0, 3.0);
-    final collarFold = Path()
-      ..moveTo(s * 0.37, s * 0.62)
-      ..quadraticBezierTo(s * 0.47, s * 0.72, s * 0.53, s * 0.72)
-      ..quadraticBezierTo(s * 0.58, s * 0.69, s * 0.63, s * 0.62);
-    canvas.drawPath(collarFold, _strokePaint);
+      ..color = AppColors.avatarHoodLight
+      ..strokeWidth = (s * 0.036).clamp(2.0, 6.4);
+    canvas.drawPath(collarPath, _strokePaint);
 
-    // Two white hoodie drawstrings with cute rounded bead ends
-    if (avatarSize != AvatarSize.xs) {
+    _strokePaint
+      ..color = AppColors.avatarHoodDark.withValues(alpha: 0.55)
+      ..strokeWidth = (s * 0.009).clamp(0.6, 1.6);
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.388, s * 0.716)
+        ..quadraticBezierTo(s * 0.50, s * 0.802, s * 0.612, s * 0.716),
+      _strokePaint,
+    );
+
+    // Subtle knit rib ticks along crewneck collar on md/lg
+    if (avatarSize == AvatarSize.md || avatarSize == AvatarSize.lg) {
       _strokePaint
-        ..color = Colors.white.withValues(alpha: 0.92)
-        ..strokeWidth = (s * 0.014).clamp(1.0, 2.8);
-      final leftString = Path()
-        ..moveTo(s * 0.455, s * 0.695)
-        ..quadraticBezierTo(s * 0.435, s * 0.76, s * 0.445, s * 0.815);
-      final rightString = Path()
-        ..moveTo(s * 0.545, s * 0.695)
-        ..quadraticBezierTo(s * 0.565, s * 0.76, s * 0.555, s * 0.815);
-      canvas.drawPath(leftString, _strokePaint);
-      canvas.drawPath(rightString, _strokePaint);
-
-      _fillPaint.color = Colors.white.withValues(alpha: 0.96);
-      canvas.drawCircle(Offset(s * 0.445, s * 0.822), s * 0.014, _fillPaint);
-      canvas.drawCircle(Offset(s * 0.555, s * 0.822), s * 0.014, _fillPaint);
+        ..color = AppColors.avatarHoodDark.withValues(alpha: 0.45)
+        ..strokeWidth = (s * 0.006).clamp(0.5, 1.2);
+      for (var i = -4; i <= 4; i++) {
+        final t = (i + 4) / 8.0;
+        final x = lerpDouble(s * 0.415, s * 0.585, t)!;
+        final curveDip = math.sin(t * math.pi) * s * 0.042;
+        canvas.drawLine(
+          Offset(x, s * 0.706 + curveDip),
+          Offset(x, s * 0.734 + curveDip),
+          _strokePaint,
+        );
+      }
     }
-
-    // Left shoulder white rim light
-    _rimPaint.strokeWidth = (s * 0.014).clamp(0.8, 2.4);
-    final leftRim = Path()
-      ..moveTo(s * 0.21, s * 0.86)
-      ..quadraticBezierTo(s * 0.20, s * 0.70, s * 0.30, s * 0.63);
-    canvas.drawPath(leftRim, _rimPaint);
 
     if (isPeek) {
       canvas.restore();
@@ -463,38 +454,28 @@ class ChibiBodyPainter extends CustomPainter {
   }
 
   void _drawNeckAndEars(Canvas canvas, double s) {
-    // Short shaded clay neck
-    _fillPaint.color = AppColors.avatarSkinShade;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(s * 0.50, s * 0.635),
-          width: s * 0.13,
-          height: s * 0.10,
-        ),
-        Radius.circular(s * 0.05),
-      ),
-      _fillPaint,
-    );
+    // Graceful slender Pixar neck tapering smoothly into crewneck collar
+    final neckPath = Path()
+      ..moveTo(s * 0.44, s * 0.595)
+      ..quadraticBezierTo(s * 0.445, s * 0.675, s * 0.405, s * 0.712)
+      ..quadraticBezierTo(s * 0.50, s * 0.775, s * 0.595, s * 0.712)
+      ..quadraticBezierTo(s * 0.555, s * 0.675, s * 0.56, s * 0.595)
+      ..close();
+    _fillPaint
+      ..shader = _neckShader
+      ..color = AppColors.avatarSkin;
+    canvas.drawPath(neckPath, _fillPaint);
+    _fillPaint.shader = null;
 
-    // Cute rounded small ears peeking below side hair
+    // Small ears subtly peeking behind the glasses temples & bob sides
     for (final side in [-1.0, 1.0]) {
-      final earCenter = Offset(s * (0.50 + side * 0.272), s * 0.475);
-      _fillPaint.color = AppColors.avatarSkin;
+      final earCenter = Offset(s * (0.50 + side * 0.218), s * 0.475);
+      _fillPaint.color = AppColors.avatarSkinShade;
       canvas.drawOval(
         Rect.fromCenter(
           center: earCenter,
-          width: s * 0.088,
-          height: s * 0.105,
-        ),
-        _fillPaint,
-      );
-      _fillPaint.color = AppColors.avatarSkinShade.withValues(alpha: 0.85);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(earCenter.dx - side * s * 0.006, earCenter.dy + s * 0.004),
-          width: s * 0.044,
-          height: s * 0.058,
+          width: s * 0.068,
+          height: s * 0.090,
         ),
         _fillPaint,
       );
@@ -502,14 +483,13 @@ class ChibiBodyPainter extends CustomPainter {
   }
 
   void _drawFace(Canvas canvas, double s) {
-    // Plump soft-chin chibi face oval: width 0.54s (rx=0.27s), height 0.50s (ry=0.25s)
-    // centered around (0.50s, 0.40s) with fuller soft cheeks
+    // Smooth heart-oval Pixar face: full soft cheeks tapering gently to cute rounded chin
     final facePath = Path()
-      ..moveTo(s * 0.50, s * 0.15)
-      ..cubicTo(s * 0.68, s * 0.15, s * 0.775, s * 0.27, s * 0.772, s * 0.43)
-      ..cubicTo(s * 0.770, s * 0.56, s * 0.665, s * 0.652, s * 0.50, s * 0.652)
-      ..cubicTo(s * 0.335, s * 0.652, s * 0.230, s * 0.56, s * 0.228, s * 0.43)
-      ..cubicTo(s * 0.225, s * 0.27, s * 0.32, s * 0.15, s * 0.50, s * 0.15)
+      ..moveTo(s * 0.50, s * 0.175)
+      ..cubicTo(s * 0.66, s * 0.175, s * 0.725, s * 0.295, s * 0.720, s * 0.445)
+      ..cubicTo(s * 0.715, s * 0.565, s * 0.618, s * 0.638, s * 0.50, s * 0.638)
+      ..cubicTo(s * 0.382, s * 0.638, s * 0.285, s * 0.565, s * 0.280, s * 0.445)
+      ..cubicTo(s * 0.275, s * 0.295, s * 0.34, s * 0.175, s * 0.50, s * 0.175)
       ..close();
 
     _fillPaint
@@ -518,72 +498,55 @@ class ChibiBodyPainter extends CustomPainter {
     canvas.drawPath(facePath, _fillPaint);
     _fillPaint.shader = null;
 
-    // Soft ambient occlusion cast shadow beneath swept bangs
+    // Soft cast shadow from side-swept bangs onto upper-left forehead
     canvas.save();
     canvas.clipPath(facePath);
-    _fillPaint.color = AppColors.avatarSkinShade.withValues(alpha: 0.45);
+    _fillPaint.color = AppColors.avatarSkinShade.withValues(alpha: 0.35);
     final bangsShadow = Path()
-      ..moveTo(s * 0.20, s * 0.16)
-      ..lineTo(s * 0.80, s * 0.16)
-      ..lineTo(s * 0.80, s * 0.35)
-      ..quadraticBezierTo(s * 0.66, s * 0.31, s * 0.50, s * 0.26)
-      ..quadraticBezierTo(s * 0.34, s * 0.31, s * 0.20, s * 0.35)
+      ..moveTo(s * 0.24, s * 0.16)
+      ..lineTo(s * 0.62, s * 0.16)
+      ..quadraticBezierTo(s * 0.52, s * 0.32, s * 0.24, s * 0.39)
       ..close();
     canvas.drawPath(bangsShadow, _fillPaint);
-
-    // Subtle soft clay forehead sheen
-    _fillPaint.color = Colors.white.withValues(alpha: 0.22);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(s * 0.45, s * 0.30),
-        width: s * 0.16,
-        height: s * 0.08,
-      ),
-      _fillPaint,
-    );
     canvas.restore();
-
-    // Soft left cheek rim light
-    _rimPaint.strokeWidth = (s * 0.012).clamp(0.7, 2.2);
-    final cheekRim = Path()
-      ..moveTo(s * 0.245, s * 0.47)
-      ..quadraticBezierTo(s * 0.255, s * 0.57, s * 0.35, s * 0.625);
-    canvas.drawPath(cheekRim, _rimPaint);
   }
 
   void _drawBlush(Canvas canvas, double s) {
-    final intensity = expression.blush.clamp(0.0, 1.0);
-    if (intensity <= 0.02) return;
-
-    final sigma = (s * 0.032).clamp(1.2, 5.5);
+    final intensity = (expression.blush * 0.85 + 0.25).clamp(0.0, 1.0);
+    final sigma = (s * 0.036).clamp(1.4, 6.0);
     _blushPaint
-      ..color = AppColors.avatarBlush.withValues(alpha: 0.62 * intensity)
+      ..color = AppColors.avatarBlush.withValues(alpha: 0.52 * intensity)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, sigma);
 
-    final leftCenter = Offset(s * 0.335, s * 0.52);
-    final rightCenter = Offset(s * 0.665, s * 0.52);
     canvas.drawOval(
-      Rect.fromCenter(center: leftCenter, width: s * 0.135, height: s * 0.072),
+      Rect.fromCenter(
+        center: Offset(s * 0.365, s * 0.495),
+        width: s * 0.145,
+        height: s * 0.085,
+      ),
       _blushPaint,
     );
     canvas.drawOval(
-      Rect.fromCenter(center: rightCenter, width: s * 0.135, height: s * 0.072),
+      Rect.fromCenter(
+        center: Offset(s * 0.635, s * 0.495),
+        width: s * 0.145,
+        height: s * 0.085,
+      ),
       _blushPaint,
     );
     _blushPaint.maskFilter = null;
 
-    // Anime diagonal blush hatch lines when blush > 0.6 (§2.2)
-    if (intensity > 0.6 && avatarSize != AvatarSize.xs) {
-      final lineAlpha = ((intensity - 0.6) / 0.4).clamp(0.0, 1.0) * 0.65;
+    if (expression.blush > 0.65 && avatarSize != AvatarSize.xs) {
+      final lineAlpha = ((expression.blush - 0.65) / 0.35).clamp(0.0, 1.0) * 0.55;
       _strokePaint
-        ..color = AppColors.avatarTongue.withValues(alpha: lineAlpha)
-        ..strokeWidth = (s * 0.0085).clamp(0.7, 1.6);
-      for (final cx in [s * 0.335, s * 0.665]) {
+        ..color = AppColors.avatarMouth.withValues(alpha: lineAlpha)
+        ..strokeWidth = (s * 0.008).clamp(0.6, 1.5);
+      for (final cx in [s * 0.365, s * 0.635]) {
         for (var i = -1; i <= 1; i++) {
-          final dx = cx + i * s * 0.024;
+          final dx = cx + i * s * 0.022;
           canvas.drawLine(
-            Offset(dx - s * 0.008, s * 0.532),
-            Offset(dx + s * 0.008, s * 0.506),
+            Offset(dx - s * 0.007, s * 0.512),
+            Offset(dx + s * 0.007, s * 0.490),
             _strokePaint,
           );
         }
@@ -594,20 +557,17 @@ class ChibiBodyPainter extends CustomPainter {
   void _drawEyes(Canvas canvas, double s) {
     final effectiveOpen = (expression.eyeOpen * (1.0 - frame.blinkAmount))
         .clamp(0.0, 1.0);
-    final leftCenter = Offset(s * 0.40, s * 0.44);
-    final rightCenter = Offset(s * 0.60, s * 0.44);
-
     _drawSingleEye(
       canvas,
       s,
-      center: leftCenter,
+      center: Offset(s * 0.398, s * 0.412),
       isViewerLeft: true,
       effectiveOpen: effectiveOpen,
     );
     _drawSingleEye(
       canvas,
       s,
-      center: rightCenter,
+      center: Offset(s * 0.602, s * 0.412),
       isViewerLeft: false,
       effectiveOpen: effectiveOpen,
     );
@@ -620,28 +580,21 @@ class ChibiBodyPainter extends CustomPainter {
     required bool isViewerLeft,
     required double effectiveOpen,
   }) {
-    final strokeW = (s * 0.022).clamp(1.4, 4.2);
+    final strokeW = (s * 0.021).clamp(1.4, 4.0);
     final outerDir = isViewerLeft ? -1.0 : 1.0;
 
-    // 1. Happy ^ ^ arch
-    if (expression.eyeShape == EyeShape.happy) {
+    if (expression.eyeShape == EyeShape.happy ||
+        (expression.winkRight && isViewerLeft)) {
       _drawCurvedClosedEye(canvas, s, center, strokeW, outerDir, happyUp: true);
       return;
     }
 
-    // 2. Wink right (anatomical right eye = viewer's left eye, matching reference!)
-    if (expression.winkRight && isViewerLeft) {
-      _drawCurvedClosedEye(canvas, s, center, strokeW, outerDir, happyUp: true);
-      return;
-    }
-
-    // 3. Squeeze > <
     if (expression.eyeShape == EyeShape.squeeze) {
       _strokePaint
-        ..color = AppColors.avatarHairShade
+        ..color = AppColors.avatarInk
         ..strokeWidth = strokeW;
-      final rx = s * 0.046;
-      final ry = s * 0.036;
+      final rx = s * 0.044;
+      final ry = s * 0.032;
       final path = Path();
       if (isViewerLeft) {
         path
@@ -658,21 +611,17 @@ class ChibiBodyPainter extends CustomPainter {
       return;
     }
 
-    // 4. Fully closed / blink bottom curve
     if (effectiveOpen < 0.09) {
       _drawCurvedClosedEye(canvas, s, center, strokeW, outerDir, happyUp: false);
       return;
     }
 
-    // 5. Open anime eye (§2.3): sclera + clipped vertical-gradient iris + pupil +
-    //    30%-lag wet specular highlights + thick upper lash line + 2 outer lashes
     final isWide = expression.eyeShape == EyeShape.wide;
-    final eyeW = s * 0.104 * (isWide ? 1.15 : 1.0);
-    final eyeH = s * 0.132 * (isWide ? 1.15 : 1.0);
+    final eyeW = s * 0.118 * (isWide ? 1.12 : 1.0);
+    final eyeH = s * 0.096 * (isWide ? 1.15 : 1.0);
     final scleraRect = Rect.fromCenter(center: center, width: eyeW, height: eyeH);
     final scleraPath = Path()..addOval(scleraRect);
 
-    // Upper eyelid vertical clip for half-closed / sleepy / blinking eyes
     final lidTopY = lerpDouble(
       scleraRect.bottom - eyeH * 0.12,
       scleraRect.top - s * 0.015,
@@ -689,107 +638,94 @@ class ChibiBodyPainter extends CustomPainter {
       ),
     );
 
-    // White sclera with subtle cool-grey top inner shadow
-    _fillPaint.color = const Color(0xFFFFFCFA);
+    // Pure studio white sclera
+    _fillPaint.color = const Color(0xFFFFFDFB);
     canvas.drawPath(scleraPath, _fillPaint);
 
-    // Clip iris & highlights inside sclera
+    // Clip glossy espresso iris + studio catchlights inside sclera
     canvas.save();
     canvas.clipPath(scleraPath);
 
     final gazeShift = Offset(
-      (frame.pupilOffset.dx * s * 0.92).clamp(-eyeW * 0.24, eyeW * 0.24),
-      (frame.pupilOffset.dy * s * 0.92).clamp(-eyeH * 0.22, eyeH * 0.22),
+      (frame.pupilOffset.dx * s * 0.90).clamp(-eyeW * 0.22, eyeW * 0.22),
+      (frame.pupilOffset.dy * s * 0.90).clamp(-eyeH * 0.20, eyeH * 0.20),
     );
-    final irisScale = isWide ? 0.85 : 1.0;
-    final irisW = eyeW * 0.78 * irisScale;
-    final irisH = eyeH * 0.76 * irisScale;
-    final irisCenter = center + gazeShift + Offset(0, eyeH * 0.03);
+    final irisScale = isWide ? 0.86 : 1.0;
+    final irisR = eyeH * 0.44 * irisScale;
+    final irisCenter = center + gazeShift + Offset(isViewerLeft ? s * 0.008 : -s * 0.008, s * 0.004);
 
-    // Glossy brown iris gradient
     canvas.save();
     canvas.translate(irisCenter.dx, irisCenter.dy);
     _fillPaint
       ..shader = _irisShader
       ..color = AppColors.avatarIris;
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: irisW, height: irisH),
-      _fillPaint,
-    );
+    canvas.drawCircle(Offset.zero, irisR, _fillPaint);
     _fillPaint.shader = null;
 
-    // Warm golden-amber lower iris inner glow
-    _fillPaint.color = AppColors.avatarIrisLight.withValues(alpha: 0.45);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(0, irisH * 0.24),
-        width: irisW * 0.64,
-        height: irisH * 0.30,
-      ),
-      _fillPaint,
-    );
-
-    // Dark pupil
     _fillPaint.color = AppColors.avatarInk;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(0, irisH * 0.02),
-        width: irisW * 0.46,
-        height: irisH * 0.48,
-      ),
-      _fillPaint,
-    );
+    canvas.drawCircle(Offset.zero, irisR * 0.56, _fillPaint);
     canvas.restore();
 
-    // Wet specular highlights (shift only 30% of gazeShift per §2.3!)
+    // Soft upper sclera shadow under lashes
+    _fillPaint.color = const Color(0xFF8C7B76).withValues(alpha: 0.22);
+    canvas.drawRect(
+      Rect.fromLTRB(scleraRect.left, scleraRect.top, scleraRect.right, scleraRect.top + eyeH * 0.22),
+      _fillPaint,
+    );
+
+    // Crisp Pixar studio catchlights (30% gaze lag)
     final specShift = gazeShift * 0.30;
-    final specBoost = isWide ? 1.18 : 1.0;
-    _fillPaint.color = Colors.white.withValues(alpha: 0.95);
+    final specBoost = isWide ? 1.15 : 1.0;
+    _fillPaint.color = Colors.white.withValues(alpha: 0.96);
     canvas.drawOval(
       Rect.fromCenter(
-        center:
-            center +
-            specShift +
-            Offset(-irisW * 0.24, -irisH * 0.22),
-        width: irisW * 0.34 * specBoost,
-        height: irisH * 0.28 * specBoost,
+        center: irisCenter - gazeShift + specShift + Offset(-irisR * 0.36, -irisR * 0.34),
+        width: irisR * 0.52 * specBoost,
+        height: irisR * 0.44 * specBoost,
       ),
       _fillPaint,
     );
     canvas.drawCircle(
-      center + specShift + Offset(irisW * 0.22, irisH * 0.24),
-      irisW * 0.12 * specBoost,
+      irisCenter - gazeShift + specShift + Offset(irisR * 0.32, irisR * 0.32),
+      irisR * 0.16 * specBoost,
       _fillPaint,
     );
 
-    canvas.restore(); // sclera clip
-    canvas.restore(); // eyelid clip
+    canvas.restore();
+    canvas.restore();
 
-    // Thick sculpted upper lash line hugging eyelid curve + 2 cute outer lashes
-    final lashY = math.max(scleraRect.top + eyeH * 0.04, lidTopY + s * 0.004);
-    final archLift = eyeH * 0.16 * effectiveOpen;
-    _strokePaint
-      ..color = AppColors.avatarHairShade
-      ..strokeWidth = (s * 0.023).clamp(1.4, 4.4);
-    final lashPath = Path()
-      ..moveTo(scleraRect.left - s * 0.005, lashY + archLift)
-      ..quadraticBezierTo(center.dx, lashY - archLift * 0.45, scleraRect.right + s * 0.005, lashY + archLift);
-    canvas.drawPath(lashPath, _strokePaint);
-
-    // 2 tiny upturned outer lashes
-    _strokePaint.strokeWidth = (s * 0.015).clamp(1.0, 2.8);
+    // Signature thick winged black eyeliner flicking upward at outer corners
+    final lashY = math.max(scleraRect.top + eyeH * 0.02, lidTopY + s * 0.003);
+    final archLift = eyeH * 0.24 * effectiveOpen;
     final outerX = isViewerLeft ? scleraRect.left : scleraRect.right;
-    final outerY = lashY + archLift * 0.85;
-    canvas.drawLine(
-      Offset(outerX, outerY),
-      Offset(outerX + outerDir * s * 0.022, outerY - s * 0.016),
-      _strokePaint,
-    );
-    canvas.drawLine(
-      Offset(outerX + outerDir * s * 0.004, outerY + s * 0.014),
-      Offset(outerX + outerDir * s * 0.020, outerY + s * 0.004),
-      _strokePaint,
-    );
+    final innerX = isViewerLeft ? scleraRect.right : scleraRect.left;
+
+    _strokePaint
+      ..color = AppColors.avatarInk
+      ..strokeWidth = (s * 0.022).clamp(1.4, 4.2);
+    final linerPath = Path()
+      ..moveTo(innerX, lashY + archLift * 0.85)
+      ..quadraticBezierTo(center.dx, lashY - archLift * 0.45, outerX, lashY + archLift * 0.65)
+      ..quadraticBezierTo(
+        outerX + outerDir * s * 0.014,
+        lashY + archLift * 0.55,
+        outerX + outerDir * s * 0.024,
+        lashY + archLift * 0.10,
+      );
+    canvas.drawPath(linerPath, _strokePaint);
+
+    // Soft delicate eyelid crease line right above open eye
+    if (effectiveOpen > 0.55 && avatarSize != AvatarSize.xs) {
+      _strokePaint
+        ..color = AppColors.avatarSkinShade.withValues(alpha: 0.72)
+        ..strokeWidth = (s * 0.007).clamp(0.5, 1.3);
+      canvas.drawPath(
+        Path()
+          ..moveTo(scleraRect.left + s * 0.01, lashY - s * 0.012)
+          ..quadraticBezierTo(center.dx, lashY - s * 0.032, scleraRect.right - s * 0.01, lashY - s * 0.012),
+        _strokePaint,
+      );
+    }
   }
 
   void _drawCurvedClosedEye(
@@ -801,122 +737,144 @@ class ChibiBodyPainter extends CustomPainter {
     required bool happyUp,
   }) {
     _strokePaint
-      ..color = AppColors.avatarHairShade
+      ..color = AppColors.avatarInk
       ..strokeWidth = strokeW;
     final rx = s * 0.052;
-    final curveDelta = happyUp ? -s * 0.042 : s * 0.032;
-    final yBase = center.dy + (happyUp ? s * 0.014 : 0.0);
-    final path = Path()
-      ..moveTo(center.dx - rx, yBase)
-      ..quadraticBezierTo(center.dx, yBase + curveDelta, center.dx + rx, yBase);
-    canvas.drawPath(path, _strokePaint);
+    final curveDelta = happyUp ? -s * 0.038 : s * 0.028;
+    final yBase = center.dy + (happyUp ? s * 0.012 : 0.0);
+    canvas.drawPath(
+      Path()
+        ..moveTo(center.dx - rx, yBase)
+        ..quadraticBezierTo(center.dx, yBase + curveDelta, center.dx + rx, yBase),
+      _strokePaint,
+    );
 
-    // 2 cute lashes at outer corner (matches reference wink!)
-    _strokePaint.strokeWidth = (strokeW * 0.68).clamp(1.0, 2.8);
+    // Cute winged flick at outer corner
     final outerX = center.dx + outerDir * rx;
     canvas.drawLine(
       Offset(outerX, yBase),
-      Offset(outerX + outerDir * s * 0.018, yBase - s * 0.016),
-      _strokePaint,
-    );
-    canvas.drawLine(
-      Offset(outerX - outerDir * s * 0.006, yBase + s * 0.006),
-      Offset(outerX + outerDir * s * 0.014, yBase + s * 0.004),
+      Offset(outerX + outerDir * s * 0.018, yBase - s * 0.014),
       _strokePaint,
     );
   }
 
+  /// Sleek sculpted dark-charcoal arched Pixar eyebrows (right brow prominent
+  /// above glasses; left brow sits naturally beneath the sweeping bangs).
   void _drawBrows(Canvas canvas, double s) {
-    final raiseOffset = -expression.browRaise * s * 0.024;
-    final tiltDelta = expression.browTilt * s * 0.020;
-    final y = s * 0.345 + raiseOffset;
+    final raiseOffset = -expression.browRaise * s * 0.020;
+    final tiltDelta = expression.browTilt * s * 0.018;
+    final y = s * 0.312 + raiseOffset;
 
     _strokePaint
-      ..color = AppColors.avatarHairShade
-      ..strokeWidth = (s * 0.022).clamp(1.2, 4.2);
+      ..color = AppColors.avatarHair
+      ..strokeWidth = (s * 0.024).clamp(1.4, 4.5);
 
-    // Viewer left eyebrow
-    final leftPath = Path()
-      ..moveTo(s * 0.345, y - tiltDelta * 0.5)
-      ..quadraticBezierTo(s * 0.398, y - s * 0.020, s * 0.448, y + tiltDelta);
-    canvas.drawPath(leftPath, _strokePaint);
+    // Viewer left eyebrow (partially tucked under side-swept bangs)
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.33, y - tiltDelta * 0.4 + s * 0.010)
+        ..quadraticBezierTo(s * 0.40, y - s * 0.018, s * 0.455, y + tiltDelta),
+      _strokePaint,
+    );
 
-    // Viewer right eyebrow
-    final rightPath = Path()
-      ..moveTo(s * 0.552, y + tiltDelta)
-      ..quadraticBezierTo(s * 0.602, y - s * 0.020, s * 0.655, y - tiltDelta * 0.5);
-    canvas.drawPath(rightPath, _strokePaint);
+    // Viewer right eyebrow (prominently arched like reference!)
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.545, y + tiltDelta)
+        ..quadraticBezierTo(s * 0.615, y - s * 0.022, s * 0.672, y - tiltDelta * 0.4 + s * 0.016),
+      _strokePaint,
+    );
   }
 
+  /// Adorable rosy-peach rounded Pixar button nose.
   void _drawNose(Canvas canvas, double s) {
-    // Adorable tiny sculpted soft clay button nose
-    final center = Offset(s * 0.50, s * 0.498);
-    _fillPaint.color = AppColors.avatarSkinShade.withValues(alpha: 0.72);
+    final center = Offset(s * 0.50, s * 0.478);
+
+    // Soft cast shadow right underneath nose
+    _fillPaint.color = AppColors.avatarSkinShade.withValues(alpha: 0.65);
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(center.dx, center.dy + s * 0.005),
-        width: s * 0.032,
-        height: s * 0.018,
+        center: Offset(center.dx, center.dy + s * 0.014),
+        width: s * 0.056,
+        height: s * 0.020,
       ),
       _fillPaint,
     );
-    _fillPaint.color = Colors.white.withValues(alpha: 0.45);
-    canvas.drawCircle(
-      Offset(center.dx - s * 0.005, center.dy - s * 0.002),
-      s * 0.007,
+
+    // Rosy plump button nose bulb
+    _fillPaint
+      ..shader = _noseShader
+      ..color = const Color(0xFFF19582);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: center,
+        width: s * 0.068,
+        height: s * 0.044,
+      ),
+      _fillPaint,
+    );
+    _fillPaint.shader = null;
+
+    // Soft specular sheen on top of nose
+    _fillPaint.color = Colors.white.withValues(alpha: 0.35);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(center.dx - s * 0.008, center.dy - s * 0.008),
+        width: s * 0.026,
+        height: s * 0.014,
+      ),
       _fillPaint,
     );
   }
 
+  /// Full soft coral-peach Pixar lips for resting smile, seamlessly morphing
+  /// into open "D" grin, talking vowels, yawn, or worried frown for expressions.
   void _drawMouth(Canvas canvas, double s) {
-    final center = Offset(s * 0.50, s * 0.556);
+    final center = Offset(s * 0.50, s * 0.548);
     final openAmt = (expression.mouthOpen + frame.mouthTalkBoost).clamp(0.0, 1.0);
     final curve = expression.mouthCurve;
 
-    // 1. Sleepy / fidget yawn: big vertical oval (§2.4)
     if (frame.isYawning) {
-      final yawnRect = Rect.fromCenter(
+      final rect = Rect.fromCenter(
         center: Offset(center.dx, center.dy + s * 0.008),
-        width: s * 0.072,
-        height: s * 0.095,
+        width: s * 0.068,
+        height: s * 0.088,
       );
-      _fillPaint.color = AppColors.avatarMouth;
-      canvas.drawOval(yawnRect, _fillPaint);
+      _fillPaint.color = const Color(0xFF7D3438);
+      canvas.drawOval(rect, _fillPaint);
       _fillPaint.color = AppColors.avatarTongue;
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(center.dx, yawnRect.bottom - s * 0.022),
-          width: s * 0.048,
-          height: s * 0.032,
+          center: Offset(center.dx, rect.bottom - s * 0.020),
+          width: s * 0.044,
+          height: s * 0.028,
         ),
         _fillPaint,
       );
       return;
     }
 
-    // 2. Wide cheerful "D" smile (reference pose!) or open talk/o mouth
     if (openAmt > 0.24 && curve > 0.45) {
       final talkNarrow = frame.talkShape * 0.22;
-      final mouthW = s * (0.108 + openAmt * 0.036) * (1.0 - talkNarrow * 0.4);
-      final mouthH = s * (0.048 + openAmt * 0.056) * (1.0 - talkNarrow);
+      final mouthW = s * (0.106 + openAmt * 0.032) * (1.0 - talkNarrow * 0.4);
+      final mouthH = s * (0.044 + openAmt * 0.050) * (1.0 - talkNarrow);
       final topY = center.dy - mouthH * 0.34;
       final dPath = Path()
         ..moveTo(center.dx - mouthW * 0.5, topY)
-        ..quadraticBezierTo(center.dx, topY + s * 0.008, center.dx + mouthW * 0.5, topY)
+        ..quadraticBezierTo(center.dx, topY + s * 0.007, center.dx + mouthW * 0.5, topY)
         ..cubicTo(
-          center.dx + mouthW * 0.46,
-          topY + mouthH * 1.15,
-          center.dx - mouthW * 0.46,
-          topY + mouthH * 1.15,
+          center.dx + mouthW * 0.44,
+          topY + mouthH * 1.12,
+          center.dx - mouthW * 0.44,
+          topY + mouthH * 1.12,
           center.dx - mouthW * 0.5,
           topY,
         )
         ..close();
 
-      _fillPaint.color = AppColors.avatarMouth;
+      _fillPaint.color = const Color(0xFF7D3438);
       canvas.drawPath(dPath, _fillPaint);
 
-      // Clip white upper teeth + coral-pink tongue inside "D" mouth
       canvas.save();
       canvas.clipPath(dPath);
       _fillPaint.color = const Color(0xFFFFFCFA);
@@ -925,7 +883,7 @@ class ChibiBodyPainter extends CustomPainter {
           Rect.fromCenter(
             center: Offset(center.dx, topY + mouthH * 0.14),
             width: mouthW * 0.84,
-            height: mouthH * 0.28,
+            height: mouthH * 0.26,
           ),
           Radius.circular(s * 0.012),
         ),
@@ -934,9 +892,9 @@ class ChibiBodyPainter extends CustomPainter {
       _fillPaint.color = AppColors.avatarTongue;
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(center.dx, topY + mouthH * 0.86),
-          width: mouthW * 0.66,
-          height: mouthH * 0.54,
+          center: Offset(center.dx, topY + mouthH * 0.85),
+          width: mouthW * 0.64,
+          height: mouthH * 0.52,
         ),
         _fillPaint,
       );
@@ -944,272 +902,275 @@ class ChibiBodyPainter extends CustomPainter {
       return;
     }
 
-    // 3. Open neutral / surprised "o" or streaming vowel alternation
     if (openAmt > 0.22) {
-      final w = lerpDouble(s * 0.055, s * 0.082, frame.talkShape)!;
-      final h = lerpDouble(s * (0.042 + openAmt * 0.046), s * 0.036, frame.talkShape)!;
+      final w = lerpDouble(s * 0.052, s * 0.078, frame.talkShape)!;
+      final h = lerpDouble(s * (0.040 + openAmt * 0.042), s * 0.034, frame.talkShape)!;
       final rect = Rect.fromCenter(center: center, width: w, height: h);
-      _fillPaint.color = AppColors.avatarMouth;
+      _fillPaint.color = const Color(0xFF7D3438);
       canvas.drawOval(rect, _fillPaint);
       _fillPaint.color = AppColors.avatarTongue;
       canvas.drawOval(
         Rect.fromCenter(
           center: Offset(center.dx, rect.bottom - h * 0.24),
-          width: w * 0.58,
-          height: h * 0.36,
+          width: w * 0.55,
+          height: h * 0.34,
         ),
         _fillPaint,
       );
       return;
     }
 
-    // 4. Closed mouths: wavy frown, cute "ω" cat smile when blush > 0.7, or sweet smile
-    _strokePaint
-      ..color = AppColors.avatarMouth
-      ..strokeWidth = (s * 0.018).clamp(1.2, 3.4);
-
     if (curve < -0.15) {
-      // Worried wavy frown
+      _strokePaint
+        ..color = AppColors.avatarMouth
+        ..strokeWidth = (s * 0.017).clamp(1.2, 3.2);
       final halfW = s * 0.048;
-      final amp = s * 0.014 * (-curve).clamp(0.3, 1.0);
-      final wavy = Path()
-        ..moveTo(center.dx - halfW, center.dy + amp * 0.5)
-        ..quadraticBezierTo(center.dx - halfW * 0.5, center.dy - amp, center.dx, center.dy)
-        ..quadraticBezierTo(center.dx + halfW * 0.5, center.dy + amp, center.dx + halfW, center.dy - amp * 0.4);
-      canvas.drawPath(wavy, _strokePaint);
-    } else if (curve > 0.4 && expression.blush > 0.7) {
-      // Cute "ω" cat smile when super rosy/blushing
-      final halfW = s * 0.052;
-      final dip = s * 0.022;
-      final cat = Path()
-        ..moveTo(center.dx - halfW, center.dy - dip * 0.3)
-        ..quadraticBezierTo(center.dx - halfW * 0.5, center.dy + dip, center.dx, center.dy - dip * 0.15)
-        ..quadraticBezierTo(center.dx + halfW * 0.5, center.dy + dip, center.dx + halfW, center.dy - dip * 0.3);
-      canvas.drawPath(cat, _strokePaint);
-    } else {
-      final halfW = s * 0.046;
-      final depth = curve * s * 0.032;
-      final smile = Path()
-        ..moveTo(center.dx - halfW, center.dy - depth * 0.25)
-        ..quadraticBezierTo(center.dx, center.dy + depth, center.dx + halfW, center.dy - depth * 0.25);
-      canvas.drawPath(smile, _strokePaint);
+      final amp = s * 0.013 * (-curve).clamp(0.3, 1.0);
+      canvas.drawPath(
+        Path()
+          ..moveTo(center.dx - halfW, center.dy + amp * 0.5)
+          ..quadraticBezierTo(center.dx - halfW * 0.5, center.dy - amp, center.dx, center.dy)
+          ..quadraticBezierTo(center.dx + halfW * 0.5, center.dy + amp, center.dx + halfW, center.dy - amp * 0.4),
+        _strokePaint,
+      );
+      return;
     }
+
+    // Signature soft full coral-peach Pixar lips with gentle warm smile!
+    final halfW = s * 0.068;
+    final lift = curve.clamp(0.0, 1.0) * s * 0.016;
+    final lowerLip = Path()
+      ..moveTo(center.dx - halfW * 0.92, center.dy - lift * 0.5)
+      ..quadraticBezierTo(center.dx, center.dy + s * 0.042, center.dx + halfW * 0.92, center.dy - lift * 0.5)
+      ..quadraticBezierTo(center.dx, center.dy + s * 0.008, center.dx - halfW * 0.92, center.dy - lift * 0.5)
+      ..close();
+    _fillPaint.color = const Color(0xFFF08B73);
+    canvas.drawPath(lowerLip, _fillPaint);
+
+    final upperLip = Path()
+      ..moveTo(center.dx - halfW * 0.88, center.dy - lift * 0.5)
+      ..quadraticBezierTo(center.dx, center.dy - s * 0.018, center.dx + halfW * 0.88, center.dy - lift * 0.5)
+      ..quadraticBezierTo(center.dx, center.dy + s * 0.008, center.dx - halfW * 0.88, center.dy - lift * 0.5)
+      ..close();
+    _fillPaint.color = const Color(0xFFE0735D);
+    canvas.drawPath(upperLip, _fillPaint);
+
+    // Subtle lip crease + glossy lower-lip highlight
+    _strokePaint
+      ..color = const Color(0xFFB55444).withValues(alpha: 0.65)
+      ..strokeWidth = (s * 0.008).clamp(0.6, 1.5);
+    canvas.drawPath(
+      Path()
+        ..moveTo(center.dx - halfW, center.dy - lift * 0.65)
+        ..quadraticBezierTo(center.dx, center.dy + s * 0.014, center.dx + halfW, center.dy - lift * 0.65),
+      _strokePaint,
+    );
+
+    _fillPaint.color = Colors.white.withValues(alpha: 0.28);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(center.dx, center.dy + s * 0.019),
+        width: s * 0.046,
+        height: s * 0.011,
+      ),
+      _fillPaint,
+    );
   }
 
-  void _drawBangs(Canvas canvas, double s, Offset sway) {
-    // Two curly side hair strands framing cheeks in front of ears (sway x 0.8)
-    _drawSideStrand(canvas, s, isLeft: true, sway: sway);
-    _drawSideStrand(canvas, s, isLeft: false, sway: sway);
+  /// Iconic thick matte-black round-wayfarer eyeglasses with curved nose bridge,
+  /// outer wing lugs, and soft semi-transparent glass lens sheen.
+  void _drawGlasses(Canvas canvas, double s) {
+    final lensW = s * 0.172;
+    final lensH = s * 0.144;
+    final leftCenter = Offset(s * 0.390, s * 0.422);
+    final rightCenter = Offset(s * 0.610, s * 0.422);
 
-    // Sculpted curtain / swept bangs: 5 soft-pointed leaf strands rotated
-    // around upper crown pivots by hairSwayOffset x 0.6 (§3 Fase B)
-    final partPivot = Offset(s * 0.48, s * 0.16);
+    RRect buildLens(Offset c) => RRect.fromRectAndCorners(
+      Rect.fromCenter(center: c, width: lensW, height: lensH),
+      topLeft: Radius.circular(s * 0.056),
+      topRight: Radius.circular(s * 0.056),
+      bottomLeft: Radius.circular(s * 0.072),
+      bottomRight: Radius.circular(s * 0.072),
+    );
+
+    final leftLens = buildLens(leftCenter);
+    final rightLens = buildLens(rightCenter);
+
+    // Subtle lens gloss reflection
+    _fillPaint.color = Colors.white.withValues(alpha: 0.10);
+    canvas.drawRRect(leftLens, _fillPaint);
+    canvas.drawRRect(rightLens, _fillPaint);
+
+    // Diagonal glass sheen streak inside right & left lenses
+    if (avatarSize != AvatarSize.xs) {
+      _strokePaint
+        ..color = Colors.white.withValues(alpha: 0.22)
+        ..strokeWidth = (s * 0.010).clamp(0.7, 1.8);
+      for (final c in [leftCenter, rightCenter]) {
+        canvas.drawLine(
+          Offset(c.dx - lensW * 0.26, c.dy - lensH * 0.28),
+          Offset(c.dx - lensW * 0.06, c.dy - lensH * 0.34),
+          _strokePaint,
+        );
+      }
+    }
+
+    // Thick matte-black frame rims
+    final frameW = (s * 0.019).clamp(1.4, 3.6);
+    _strokePaint
+      ..color = AppColors.avatarGlasses
+      ..strokeWidth = frameW;
+    canvas.drawRRect(leftLens, _strokePaint);
+    canvas.drawRRect(rightLens, _strokePaint);
+
+    // Curved keyhole nose bridge
+    final bridgePath = Path()
+      ..moveTo(leftCenter.dx + lensW * 0.48, leftCenter.dy - s * 0.018)
+      ..quadraticBezierTo(s * 0.50, leftCenter.dy - s * 0.044, rightCenter.dx - lensW * 0.48, rightCenter.dy - s * 0.018);
+    canvas.drawPath(bridgePath, _strokePaint);
+
+    // Outer frame wing endpieces
+    _strokePaint.strokeWidth = frameW * 1.15;
+    canvas.drawLine(
+      Offset(leftCenter.dx - lensW * 0.48, leftCenter.dy - s * 0.040),
+      Offset(leftCenter.dx - lensW * 0.58, leftCenter.dy - s * 0.044),
+      _strokePaint,
+    );
+    canvas.drawLine(
+      Offset(rightCenter.dx + lensW * 0.48, rightCenter.dy - s * 0.040),
+      Offset(rightCenter.dx + lensW * 0.58, rightCenter.dy - s * 0.044),
+      _strokePaint,
+    );
+
+    // Subtle top-frame specular sheen so frames look 3D matte-plastic
+    _strokePaint
+      ..color = Colors.white.withValues(alpha: 0.16)
+      ..strokeWidth = (s * 0.006).clamp(0.5, 1.1);
+    canvas.drawLine(
+      Offset(leftCenter.dx - lensW * 0.25, leftCenter.dy - lensH * 0.49),
+      Offset(leftCenter.dx + lensW * 0.22, leftCenter.dy - lensH * 0.49),
+      _strokePaint,
+    );
+    canvas.drawLine(
+      Offset(rightCenter.dx - lensW * 0.22, rightCenter.dy - lensH * 0.49),
+      Offset(rightCenter.dx + lensW * 0.25, rightCenter.dy - lensH * 0.49),
+      _strokePaint,
+    );
+  }
+
+  /// Deep side-swept glossy black bangs sweeping diagonally from upper-right
+  /// part down over the viewer's left forehead & glasses rim, plus sleek
+  /// framing bob sides.
+  void _drawBangsAndBobSides(Canvas canvas, double s, Offset sway) {
+    final partPivot = Offset(s * 0.58, s * 0.13);
     canvas.save();
     canvas.translate(partPivot.dx, partPivot.dy);
-    canvas.rotate(-sway.dx * 0.6);
-    canvas.translate(-partPivot.dx, -partPivot.dy + sway.dy * s * 0.18);
+    canvas.rotate(-sway.dx * 0.55);
+    canvas.translate(-partPivot.dx, -partPivot.dy + sway.dy * s * 0.16);
 
     _fillPaint
-      ..shader = _bangsShader
+      ..shader = _hairFrontShader
       ..color = AppColors.avatarHair;
 
-    // Left voluminous curtain sweep
-    final leftCurtain = Path()
-      ..moveTo(s * 0.485, s * 0.14)
-      ..cubicTo(s * 0.32, s * 0.12, s * 0.20, s * 0.24, s * 0.19, s * 0.42)
-      ..quadraticBezierTo(s * 0.24, s * 0.43, s * 0.28, s * 0.35)
-      ..cubicTo(s * 0.34, s * 0.28, s * 0.44, s * 0.24, s * 0.485, s * 0.18)
+    // Main sweeping diagonal left-side bangs (signature look of reference!)
+    final mainBang = Path()
+      ..moveTo(s * 0.575, s * 0.125)
+      ..cubicTo(s * 0.37, s * 0.085, s * 0.23, s * 0.21, s * 0.235, s * 0.385)
+      ..quadraticBezierTo(s * 0.35, s * 0.38, s * 0.455, s * 0.34)
+      ..cubicTo(s * 0.535, s * 0.30, s * 0.585, s * 0.22, s * 0.575, s * 0.125)
       ..close();
-    canvas.drawPath(leftCurtain, _fillPaint);
+    canvas.drawPath(mainBang, _fillPaint);
 
-    // Right voluminous curtain sweep
-    final rightCurtain = Path()
-      ..moveTo(s * 0.475, s * 0.14)
-      ..cubicTo(s * 0.65, s * 0.12, s * 0.79, s * 0.23, s * 0.80, s * 0.41)
-      ..quadraticBezierTo(s * 0.75, s * 0.42, s * 0.71, s * 0.34)
-      ..cubicTo(s * 0.65, s * 0.27, s * 0.54, s * 0.24, s * 0.475, s * 0.18)
+    // Right side hair sweep curving neatly along right temple & glasses edge
+    final rightSweep = Path()
+      ..moveTo(s * 0.575, s * 0.125)
+      ..cubicTo(s * 0.69, s * 0.13, s * 0.77, s * 0.25, s * 0.77, s * 0.44)
+      ..quadraticBezierTo(s * 0.72, s * 0.43, s * 0.71, s * 0.35)
+      ..cubicTo(s * 0.69, s * 0.26, s * 0.63, s * 0.20, s * 0.575, s * 0.165)
       ..close();
-    canvas.drawPath(rightCurtain, _fillPaint);
-
-    // 3 soft-pointed inner leaf strands sweeping softly over forehead
-    final leafStrands = [
-      (Offset(s * 0.47, s * 0.16), Offset(s * 0.34, s * 0.25), Offset(s * 0.29, s * 0.34), Offset(s * 0.40, s * 0.28)),
-      (Offset(s * 0.48, s * 0.17), Offset(s * 0.44, s * 0.24), Offset(s * 0.42, s * 0.30), Offset(s * 0.49, s * 0.24)),
-      (Offset(s * 0.49, s * 0.16), Offset(s * 0.62, s * 0.24), Offset(s * 0.69, s * 0.33), Offset(s * 0.58, s * 0.27)),
-    ];
-    for (final (p0, c1, tip, c2) in leafStrands) {
-      final leaf = Path()
-        ..moveTo(p0.dx, p0.dy)
-        ..quadraticBezierTo(c1.dx, c1.dy, tip.dx, tip.dy)
-        ..quadraticBezierTo(c2.dx, c2.dy, p0.dx, p0.dy)
-        ..close();
-      canvas.drawPath(leaf, _fillPaint);
-    }
+    canvas.drawPath(rightSweep, _fillPaint);
     _fillPaint.shader = null;
 
-    // Soft sculpted clay ridge highlights & part groove
+    // Delicate wispy strands grazing forehead above the bridge of the glasses
     _strokePaint
-      ..color = AppColors.avatarHairHighlight.withValues(alpha: 0.50)
-      ..strokeWidth = (s * 0.018).clamp(1.0, 3.2);
-    canvas.drawPath(
-      Path()
-        ..moveTo(s * 0.26, s * 0.29)
-        ..quadraticBezierTo(s * 0.34, s * 0.18, s * 0.46, s * 0.17),
-      _strokePaint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(s * 0.51, s * 0.17)
-        ..quadraticBezierTo(s * 0.64, s * 0.18, s * 0.72, s * 0.28),
-      _strokePaint,
-    );
-
-    _strokePaint
-      ..color = AppColors.avatarHairShade.withValues(alpha: 0.55)
+      ..color = AppColors.avatarHair
       ..strokeWidth = (s * 0.011).clamp(0.7, 2.0);
     canvas.drawPath(
       Path()
-        ..moveTo(s * 0.48, s * 0.145)
-        ..quadraticBezierTo(s * 0.475, s * 0.185, s * 0.49, s * 0.215),
+        ..moveTo(s * 0.555, s * 0.24)
+        ..quadraticBezierTo(s * 0.535, s * 0.325, s * 0.455, s * 0.365),
+      _strokePaint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.582, s * 0.19)
+        ..quadraticBezierTo(s * 0.585, s * 0.27, s * 0.530, s * 0.335),
+      _strokePaint,
+    );
+
+    // Luminous silky specular highlight band curving across the bangs
+    _strokePaint
+      ..color = AppColors.avatarHairHighlight.withValues(alpha: 0.55)
+      ..strokeWidth = (s * 0.020).clamp(1.0, 3.6);
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.30, s * 0.255)
+        ..quadraticBezierTo(s * 0.41, s * 0.165, s * 0.545, s * 0.165),
+      _strokePaint,
+    );
+
+    // Subtle dark parting line at the crown
+    _strokePaint
+      ..color = AppColors.avatarHairShade
+      ..strokeWidth = (s * 0.010).clamp(0.6, 1.8);
+    canvas.drawPath(
+      Path()
+        ..moveTo(s * 0.575, s * 0.115)
+        ..quadraticBezierTo(s * 0.580, s * 0.155, s * 0.570, s * 0.195),
       _strokePaint,
     );
 
     canvas.restore();
   }
 
-  void _drawSideStrand(
-    Canvas canvas,
-    double s, {
-    required bool isLeft,
-    required Offset sway,
-  }) {
-    final sign = isLeft ? -1.0 : 1.0;
-    final pivot = Offset(s * (0.50 + sign * 0.25), s * 0.33);
-    canvas.save();
-    canvas.translate(pivot.dx, pivot.dy);
-    canvas.rotate(-sway.dx * 0.8);
-    canvas.translate(-pivot.dx, -pivot.dy + sway.dy * s * 0.22);
-
-    _fillPaint
-      ..shader = _bangsShader
-      ..color = AppColors.avatarHair;
-    final strand = Path()
-      ..moveTo(s * (0.50 + sign * 0.23), s * 0.32)
-      ..cubicTo(
-        s * (0.50 + sign * 0.31),
-        s * 0.40,
-        s * (0.50 + sign * 0.33),
-        s * 0.50,
-        s * (0.50 + sign * 0.29),
-        s * 0.57,
-      )
-      ..quadraticBezierTo(
-        s * (0.50 + sign * 0.24),
-        s * 0.51,
-        s * (0.50 + sign * 0.22),
-        s * 0.39,
-      )
-      ..close();
-    canvas.drawPath(strand, _fillPaint);
-    _fillPaint.shader = null;
-    canvas.restore();
-  }
-
-  void _drawAhogeAndClip(Canvas canvas, double s, Offset sway) {
-    // 1. Bouncy signature ahoge (sway x 1.4, perk from ahogePerk, "?" in error mood)
-    final ahogeBase = Offset(s * 0.51, s * 0.145);
-    canvas.save();
-    canvas.translate(ahogeBase.dx, ahogeBase.dy);
-    canvas.rotate(sway.dx * 1.4 + (1.0 - expression.ahogePerk) * 0.42);
-    canvas.translate(-ahogeBase.dx, -ahogeBase.dy);
-
-    final lift = lerpDouble(s * 0.045, s * 0.115, expression.ahogePerk)!;
-    _strokePaint
-      ..color = AppColors.avatarHair
-      ..strokeWidth = (s * 0.024).clamp(1.4, 4.4);
-
-    if (frame.isQuestionAhoge) {
-      // Playful "?" curl during error mood (§2.7)
-      final qPath = Path()
-        ..moveTo(ahogeBase.dx, ahogeBase.dy)
-        ..cubicTo(
-          ahogeBase.dx - s * 0.02,
-          ahogeBase.dy - lift * 0.55,
-          ahogeBase.dx + s * 0.06,
-          ahogeBase.dy - lift * 0.55,
-          ahogeBase.dx + s * 0.045,
-          ahogeBase.dy - lift * 0.95,
-        )
-        ..cubicTo(
-          ahogeBase.dx + s * 0.03,
-          ahogeBase.dy - lift * 1.25,
-          ahogeBase.dx - s * 0.04,
-          ahogeBase.dy - lift * 1.12,
-          ahogeBase.dx - s * 0.035,
-          ahogeBase.dy - lift * 0.78,
-        );
-      canvas.drawPath(qPath, _strokePaint);
-    } else {
-      final ahogePath = Path()
-        ..moveTo(ahogeBase.dx, ahogeBase.dy)
-        ..cubicTo(
-          ahogeBase.dx + s * 0.02 + sway.dx * s * 0.25,
-          ahogeBase.dy - lift * 0.75,
-          ahogeBase.dx + s * 0.09 + sway.dx * s * 0.4,
-          ahogeBase.dy - lift,
-          ahogeBase.dx + s * 0.115 + sway.dx * s * 0.5,
-          ahogeBase.dy - lift * 0.48 + sway.dy * s * 0.35,
-        );
-      canvas.drawPath(ahogePath, _strokePaint);
-
-      // Subtle glossy highlight along ahoge curve
-      _strokePaint
-        ..color = AppColors.avatarHairHighlight.withValues(alpha: 0.6)
-        ..strokeWidth = (s * 0.009).clamp(0.7, 1.8);
-      canvas.drawPath(ahogePath, _strokePaint);
-    }
-    canvas.restore();
-
-    // 2. Glowing 5-point star hair clip (Wynn's mood beacon!)
-    final clipCenter = Offset(
-      s * 0.665 - sway.dx * s * 0.06,
-      s * 0.245 + sway.dy * s * 0.12,
-    );
-    final starR = s * 0.048;
+  /// Subtle glowing mood star pin tucked neatly near the right hair part so
+  /// all 9 mood colors stay readable while preserving the clean bob silhouette.
+  void _drawMoodAccent(Canvas canvas, double s, Offset sway) {
     final glowStrength = (expression.accentGlow * frame.accentPulse).clamp(
       0.0,
-      1.2,
+      1.1,
     );
+    if (glowStrength < 0.08 && !frame.isQuestionAhoge) return;
 
-    if (glowStrength > 0.05) {
-      final blurSigma = (s * 0.034).clamp(1.4, 6.0);
+    final pinCenter = Offset(
+      s * 0.655 - sway.dx * s * 0.05,
+      s * 0.235 + sway.dy * s * 0.10,
+    );
+    final starR = s * 0.032;
+
+    if (glowStrength > 0.08) {
+      final blurSigma = (s * 0.026).clamp(1.2, 4.8);
       _glowPaint
         ..color = expression.accentColor.withValues(
-          alpha: (0.55 * glowStrength).clamp(0.0, 0.85),
+          alpha: (0.50 * glowStrength).clamp(0.0, 0.80),
         )
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurSigma);
-      canvas.drawCircle(
-        clipCenter,
-        starR * (1.25 + glowStrength * 0.35),
-        _glowPaint,
-      );
+      canvas.drawCircle(pinCenter, starR * (1.2 + glowStrength * 0.3), _glowPaint);
       _glowPaint.maskFilter = null;
     }
 
     canvas.save();
-    canvas.translate(clipCenter.dx, clipCenter.dy);
-    canvas.rotate(0.22 - sway.dx * 0.5);
-    final starPath = _buildStarPath(starR, starR * 0.48);
+    canvas.translate(pinCenter.dx, pinCenter.dy);
+    canvas.rotate(0.18 - sway.dx * 0.4);
+    final starPath = _buildStarPath(starR, starR * 0.46);
     _fillPaint.color = Color.lerp(
       AppColors.avatarStarClip,
       expression.accentColor,
-      (0.35 + expression.accentGlow * 0.45).clamp(0.0, 0.85),
+      (0.35 + expression.accentGlow * 0.5).clamp(0.0, 0.85),
     )!;
     canvas.drawPath(starPath, _fillPaint);
-
-    // Tiny glossy clay highlight dot on star clip
-    _fillPaint.color = Colors.white.withValues(alpha: 0.82);
-    canvas.drawCircle(Offset(-starR * 0.22, -starR * 0.20), starR * 0.22, _fillPaint);
+    _fillPaint.color = Colors.white.withValues(alpha: 0.85);
+    canvas.drawCircle(Offset(-starR * 0.2, -starR * 0.2), starR * 0.2, _fillPaint);
     canvas.restore();
   }
 
@@ -1229,7 +1190,6 @@ class ChibiBodyPainter extends CustomPainter {
   }
 
   void _drawArms(Canvas canvas, double s) {
-    // §2.8 framing visibility: xs omits arms; sm draws arms only for peek/cheer
     if (avatarSize == AvatarSize.xs) return;
     final effectivePose =
         (poseMode == AvatarPoseMode.peek && expression.armPose == ArmPose.rest)
@@ -1242,16 +1202,15 @@ class ChibiBodyPainter extends CustomPainter {
       return;
     }
 
-    // Viewer left arm (shoulder at 0.26, 0.72 -> frame.leftHandPos)
-    final leftShoulder = Offset(s * 0.24, s * 0.74);
-    final rightShoulder = Offset(s * 0.76, s * 0.74);
+    final leftShoulder = Offset(s * 0.26, s * 0.78);
+    final rightShoulder = Offset(s * 0.74, s * 0.78);
     final leftHand = Offset(frame.leftHandPos.dx * s, frame.leftHandPos.dy * s);
     final rightHand = Offset(
       frame.rightHandPos.dx * s,
       frame.rightHandPos.dy * s,
     );
 
-    _drawHoodieArm(
+    _drawSweaterArm(
       canvas,
       s,
       shoulder: leftShoulder,
@@ -1259,7 +1218,7 @@ class ChibiBodyPainter extends CustomPainter {
       isLeft: true,
       pose: effectivePose,
     );
-    _drawHoodieArm(
+    _drawSweaterArm(
       canvas,
       s,
       shoulder: rightShoulder,
@@ -1269,7 +1228,7 @@ class ChibiBodyPainter extends CustomPainter {
     );
   }
 
-  void _drawHoodieArm(
+  void _drawSweaterArm(
     Canvas canvas,
     double s, {
     required Offset shoulder,
@@ -1278,78 +1237,70 @@ class ChibiBodyPainter extends CustomPainter {
     required ArmPose pose,
   }) {
     final dir = hand - shoulder;
-    final dist = dir.distance.clamp(s * 0.08, s * 0.45);
+    final dist = dir.distance.clamp(s * 0.08, s * 0.44);
     final angle = math.atan2(dir.dy, dir.dx);
-    final sleeveW = s * 0.145;
-    final cuffOffset = (dist - s * 0.068).clamp(s * 0.04, dist);
+    final sleeveW = s * 0.128;
+    final cuffOffset = (dist - s * 0.060).clamp(s * 0.04, dist);
 
-    // 1. Chunky lavender hoodie sleeve & ribbed cuff
-    // In peek mode, clip sleeves along the card rim so ONLY hands drape over the card!
     final clipSleeveAtRim = poseMode == AvatarPoseMode.peek;
     if (clipSleeveAtRim) {
       canvas.save();
       canvas.clipRect(Rect.fromLTRB(-s * 0.1, 0, s * 1.1, s * 0.875));
     }
+
     canvas.save();
     canvas.translate(shoulder.dx, shoulder.dy);
     canvas.rotate(angle);
 
     final sleeveRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(-s * 0.05, -sleeveW * 0.5, cuffOffset + s * 0.05, sleeveW),
+      Rect.fromLTWH(-s * 0.04, -sleeveW * 0.5, cuffOffset + s * 0.04, sleeveW),
       Radius.circular(sleeveW * 0.48),
     );
     _fillPaint
-      ..shader = _hoodieShader
+      ..shader = _sweaterShader
       ..color = AppColors.avatarHood;
     canvas.drawRRect(sleeveRect, _fillPaint);
     _fillPaint.shader = null;
 
-    // Chunky ribbed lavender cuff band (matches reference hoodie cuffs!)
-    final cuffRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        cuffOffset - s * 0.058,
-        -sleeveW * 0.47,
-        s * 0.072,
-        sleeveW * 0.94,
+    // Matching navy-blue sleeve stripe near cuff
+    _fillPaint.color = AppColors.avatarSweaterStripe;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          cuffOffset - s * 0.068,
+          -sleeveW * 0.46,
+          s * 0.032,
+          sleeveW * 0.92,
+        ),
+        Radius.circular(s * 0.012),
       ),
-      Radius.circular(sleeveW * 0.30),
+      _fillPaint,
     );
-    _fillPaint.color = AppColors.avatarHoodLight;
-    canvas.drawRRect(cuffRect, _fillPaint);
 
-    _strokePaint
-      ..color = AppColors.avatarHoodDark.withValues(alpha: 0.35)
-      ..strokeWidth = (s * 0.011).clamp(0.7, 2.0);
-    canvas.drawLine(
-      Offset(cuffOffset - s * 0.056, -sleeveW * 0.40),
-      Offset(cuffOffset - s * 0.056, sleeveW * 0.40),
-      _strokePaint,
-    );
     canvas.restore();
     if (clipSleeveAtRim) {
       canvas.restore();
     }
 
-    // 2. Plump soft-clay mitten hand (no outlines, soft gradient)
-    final handRx = pose == ArmPose.peek ? s * 0.074 : s * 0.062;
-    final handRy = pose == ArmPose.peek ? s * 0.056 : s * 0.064;
+    // Soft Pixar hand
+    final handRx = pose == ArmPose.peek ? s * 0.066 : s * 0.056;
+    final handRy = pose == ArmPose.peek ? s * 0.050 : s * 0.058;
 
     canvas.save();
     canvas.translate(hand.dx, hand.dy);
     if (pose == ArmPose.chin && !isLeft) {
-      canvas.rotate(-0.35);
+      canvas.rotate(-0.32);
     } else if (pose == ArmPose.peek) {
-      canvas.rotate(isLeft ? 0.16 : -0.16);
+      canvas.rotate(isLeft ? 0.15 : -0.15);
     }
 
-    // Soft drop shadow beneath peeking hand over card rim
     if (pose == ArmPose.peek || (pose == ArmPose.chin && isLeft)) {
-      _fillPaint.color = AppColors.avatarInk.withValues(alpha: 0.11);
+      _fillPaint.color = AppColors.avatarInk.withValues(alpha: 0.10);
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(0, s * 0.014),
-          width: handRx * 1.95,
-          height: handRy * 1.75,
+          center: Offset(0, s * 0.012),
+          width: handRx * 1.9,
+          height: handRy * 1.7,
         ),
         _fillPaint,
       );
@@ -1364,19 +1315,18 @@ class ChibiBodyPainter extends CustomPainter {
     );
     _fillPaint.shader = null;
 
-    // Subtle soft-clay finger crease hints on md/lg sizes
     if (avatarSize == AvatarSize.md || avatarSize == AvatarSize.lg) {
       _strokePaint
-        ..color = AppColors.avatarSkinShade.withValues(alpha: 0.65)
-        ..strokeWidth = (s * 0.008).clamp(0.6, 1.5);
+        ..color = AppColors.avatarSkinShade.withValues(alpha: 0.60)
+        ..strokeWidth = (s * 0.0075).clamp(0.6, 1.4);
       canvas.drawLine(
-        Offset(-handRx * 0.25, handRy * 0.18),
-        Offset(-handRx * 0.20, handRy * 0.72),
+        Offset(-handRx * 0.24, handRy * 0.18),
+        Offset(-handRx * 0.20, handRy * 0.70),
         _strokePaint,
       );
       canvas.drawLine(
         Offset(handRx * 0.18, handRy * 0.18),
-        Offset(handRx * 0.22, handRy * 0.72),
+        Offset(handRx * 0.22, handRy * 0.70),
         _strokePaint,
       );
     }

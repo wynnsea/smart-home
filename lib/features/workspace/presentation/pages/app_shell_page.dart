@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/widgets/ethereal_background.dart';
-import '../../../../core/widgets/motion_widgets.dart';
-import '../../../agent_chat/presentation/pages/agent_hub_page.dart';
 import '../../../agent_chat/presentation/pages/investigation_chat_page.dart';
 import '../../../git_diff/presentation/pages/git_diff_page.dart';
 import '../../../git_diff/presentation/providers/git_diff_provider.dart';
@@ -40,15 +38,9 @@ class _AppShellPageState extends ConsumerState<AppShellPage> {
     };
   }
 
-  Future<void> _openAgentHub() async {
-    final result = await Navigator.of(context).push<String>(
-      EtherealPageRoute<String>(
-        builder: (_) => const AgentHubPage(),
-      ),
-    );
-    if (result == 'chat' && mounted) {
-      setState(() => _tabIndex = 1);
-    }
+  void _openChatAi() {
+    HapticFeedback.lightImpact();
+    setState(() => _tabIndex = 1);
   }
 
   @override
@@ -116,7 +108,7 @@ class _AppShellPageState extends ConsumerState<AppShellPage> {
                               setState(() => _tabIndex = index);
                             }
                           },
-                          onSparkleFabTap: _openAgentHub,
+                          onSparkleFabTap: _openChatAi,
                         ),
                       ),
                     ),

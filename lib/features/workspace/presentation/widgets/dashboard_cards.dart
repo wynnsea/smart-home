@@ -625,11 +625,13 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
     final items = [
-      (Icons.home_rounded, 'Home'),
-      (Icons.chat_bubble_outline_rounded, 'Chat'),
-      (Icons.difference_outlined, 'Diff'),
-      (Icons.dns_outlined, 'Host'),
+      (Icons.home_rounded, 'Home', 0),
+      (Icons.difference_outlined, 'Diff', 2),
+      (Icons.dns_outlined, 'Host', 3),
     ];
+    final activeSlot = items
+        .indexWhere((item) => item.$3 == widget.currentIndex)
+        .clamp(0, items.length - 1);
 
     return SafeArea(
       top: false,
@@ -653,7 +655,7 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                               ? Duration.zero
                               : const Duration(milliseconds: 340),
                           curve: Curves.easeOutBack,
-                          left: widget.currentIndex * slotWidth + 3,
+                          left: activeSlot * slotWidth + 3,
                           top: 2,
                           bottom: 2,
                           width: slotWidth - 6,
@@ -687,10 +689,10 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                         ),
                         Row(
                           children: List.generate(items.length, (index) {
-                            final selected = index == widget.currentIndex;
-                            final (icon, label) = items[index];
+                            final (icon, label, tabIdx) = items[index];
+                            final selected = tabIdx == widget.currentIndex;
                             final hasDiffBadge =
-                                index == 2 && widget.diffBadgeCount > 0;
+                                tabIdx == 2 && widget.diffBadgeCount > 0;
                             final semanticLabel = hasDiffBadge
                                 ? 'Diff, ${widget.diffBadgeCount} file berubah'
                                 : label;
@@ -705,7 +707,7 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                                 child: Tooltip(
                                   message: semanticLabel,
                                   child: GestureDetector(
-                                    onTap: () => widget.onSelectTab(index),
+                                    onTap: () => widget.onSelectTab(tabIdx),
                                     behavior: HitTestBehavior.opaque,
                                     child: Center(
                                       child: AnimatedScale(
@@ -780,7 +782,7 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
             const SizedBox(width: 14),
             BouncyTap(
               pressedScale: 0.91,
-              semanticLabel: 'Buka WynnDiff Agent',
+              semanticLabel: 'Buka Chat AI',
               onTap: widget.onSparkleFabTap,
               child: RepaintBoundary(
                 child: AnimatedBuilder(

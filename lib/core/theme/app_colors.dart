@@ -81,20 +81,22 @@ abstract final class AppColors {
     colors: [Color(0xFF7447FF), Color(0xFFB596FF)],
   );
 
-  // AI avatar (Wynn v2 chibi clay palette)
-  static const Color avatarHoodLight = Color(0xFFCDB9FF);
-  static const Color avatarHood = Color(0xFF9F7BFF);
-  static const Color avatarHoodDark = Color(0xFF7A55E8);
-  static const Color avatarSkin = Color(0xFFFFE3D3);
-  static const Color avatarSkinShade = Color(0xFFF5C2AE);
-  static const Color avatarHair = Color(0xFF6B4532);
-  static const Color avatarHairShade = Color(0xFF4A2E22);
-  static const Color avatarHairHighlight = Color(0xFF9A6A4E);
-  static const Color avatarIris = Color(0xFF5A3A2E);
-  static const Color avatarIrisLight = Color(0xFFA9765A);
+  // AI avatar (Wynn Pixar 3D character palette — glossy black bob, glasses, cream/navy knit)
+  static const Color avatarHoodLight = Color(0xFFF7F5F1);
+  static const Color avatarHood = Color(0xFFEBE7DF);
+  static const Color avatarHoodDark = Color(0xFFD2CCC2);
+  static const Color avatarSweaterStripe = Color(0xFF343C66);
+  static const Color avatarGlasses = Color(0xFF17181E);
+  static const Color avatarSkin = Color(0xFFFAD3BC);
+  static const Color avatarSkinShade = Color(0xFFE3A38B);
+  static const Color avatarHair = Color(0xFF1C1D25);
+  static const Color avatarHairShade = Color(0xFF0E0F14);
+  static const Color avatarHairHighlight = Color(0xFF565D78);
+  static const Color avatarIris = Color(0xFF2B1C18);
+  static const Color avatarIrisLight = Color(0xFF5A3D33);
   static const Color avatarStarClip = Color(0xFFFFD66B);
-  static const Color avatarBlush = Color(0xFFFFB4C8);
-  static const Color avatarInk = Color(0xFF2B2340);
-  static const Color avatarMouth = Color(0xFF8C3B5A);
-  static const Color avatarTongue = Color(0xFFFF8FA8);
+  static const Color avatarBlush = Color(0xFFF4988C);
+  static const Color avatarInk = Color(0xFF14151C);
+  static const Color avatarMouth = Color(0xFFD96F5A);
+  static const Color avatarTongue = Color(0xFFF49584);
 }

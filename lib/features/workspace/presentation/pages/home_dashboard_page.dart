@@ -90,7 +90,7 @@ class HomeDashboardPage extends ConsumerWidget {
                   ),
                   alignment: Alignment.center,
                   child: const Text(
-                    'WS',
+                    'W',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,

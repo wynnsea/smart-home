@@ -20,8 +20,9 @@ void main() {
       await tester.pumpWidget(const ProviderScope(child: WynnDiffApp()));
       await tester.pump(const Duration(milliseconds: 250));
 
-      // Home Dashboard (dynamic greeting, no hardcoded Good Morning)
+      // Home Dashboard (dynamic greeting for Wayan)
       expect(find.textContaining('Selamat '), findsOneWidget);
+      expect(find.text('Wayan'), findsOneWidget);
       expect(find.text('Active Host Session'), findsOneWidget);
       expect(find.text('Quick Workspace'), findsOneWidget);
 
@@ -29,8 +30,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('Continue Coding'), findsOneWidget);
 
-      // Navigate to Chat tab (starts clean with zero dummy messages and NO bottom nav!)
-      await tester.tap(find.byIcon(Icons.chat_bubble_outline_rounded));
+      // Open Chat via unified purple Sparkle FAB (no duplicate Chat tab in pill, no bottom nav inside Chat!)
+      await tester.tap(find.byIcon(Icons.auto_awesome_rounded).last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
@@ -69,13 +70,16 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       expect(find.text('Working tree bersih'), findsOneWidget);
 
-      // Open Agent Hub via purple Sparkle FAB
-      await tester.tap(find.byIcon(Icons.auto_awesome_rounded).last);
+      // Back to Home and open Agent Hub via Active Host Session hero card
+      await tester.tap(find.byIcon(Icons.home_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.tap(find.text('Active Host Session'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
 
       expect(find.text('WynnDiff Agent'), findsOneWidget);
-      expect(find.text('Halo, Wynnsea Dev'), findsOneWidget);
+      expect(find.text('Halo, Wayan'), findsOneWidget);
       expect(find.text('How Can I help you?'), findsOneWidget);
     },
   );
@@ -112,8 +116,8 @@ void main() {
       await tester.tap(find.text('Putuskan'));
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Switch to Chat tab → disconnected banner & locked composer
-      await tester.tap(find.byIcon(Icons.chat_bubble_outline_rounded));
+      // Open Chat via unified purple Sparkle FAB → disconnected banner & locked composer
+      await tester.tap(find.byIcon(Icons.auto_awesome_rounded).last);
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('Host terputus · Sambungkan ulang'), findsOneWidget);
 

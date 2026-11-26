@@ -6,7 +6,7 @@ class MockWorkspaceDatasource {
     final envHost = AppEnv.bridgeHost;
     return WorkspaceOverview(
       hostStatus: HostStatus(
-        userName: 'Wynnsea Dev',
+        userName: 'Wayan',
         hostName: envHost.isNotEmpty ? 'PC Bridge ($envHost)' : 'AI Gateway Ready',
         hostAddress: envHost.isNotEmpty ? envHost : '127.0.0.1',
         hostPort: AppEnv.bridgePort,
