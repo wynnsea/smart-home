@@ -17,7 +17,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const ProviderScope(child: WynnDiffApp()));
+      await tester.pumpWidget(
+        const ProviderScope(child: WynnDiffApp(showSplash: false)),
+      );
       await tester.pump(const Duration(milliseconds: 250));
 
       // Home Dashboard (dynamic greeting for Wayan)
@@ -100,7 +102,7 @@ void main() {
               textScaler: TextScaler.linear(1.3),
               disableAnimations: true,
             ),
-            child: WynnDiffApp(),
+            child: WynnDiffApp(showSplash: false),
           ),
         ),
       );
@@ -146,4 +148,18 @@ void main() {
       expect(find.byIcon(Icons.send_rounded), findsOneWidget);
     },
   );
+
+  testWidgets('SplashPage shows WynnDiff branding and transitions cleanly to Home', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const ProviderScope(child: WynnDiffApp()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('WynnDiff'), findsOneWidget);
+    expect(find.text('AI Remote Coding Agent'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Active Host Session'), findsOneWidget);
+  });
 }
