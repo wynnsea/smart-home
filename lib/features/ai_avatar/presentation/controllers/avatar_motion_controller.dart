@@ -8,11 +8,10 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/avatar_expression.dart';
 import '../../domain/avatar_mood.dart';
-import '../painters/avatar_body_painter.dart';
 import 'avatar_frame.dart';
 
 /// Local per-widget animation engine holding a SINGLE [Ticker] for all
-/// breathing, blinking, glances, squash & stretch, spring-lagged antenna,
+/// breathing, blinking, glances, squash & stretch, spring-lagged hair/ahoge,
 /// expression interpolation, particles, idle fidgets, sleepy detection,
 /// and 3D drag tilt spring physics.
 class AvatarMotionController extends ChangeNotifier {
@@ -40,7 +39,11 @@ class AvatarMotionController extends ChangeNotifier {
     final (lh, rh) = handTargetsForPose(initExpr.armPose);
     _leftHandPos = lh;
     _rightHandPos = rh;
-    _frame = AvatarFrame.staticForPose(initExpr.armPose);
+    _frame = AvatarFrame.staticForPose(
+      initExpr.armPose,
+      headTilt: initExpr.headTilt,
+      isQuestionAhoge: initialMood == AvatarMood.error,
+    );
     _scheduleNextBlink();
     _scheduleNextGlance();
     _scheduleNextFidget();
@@ -99,9 +102,13 @@ class AvatarMotionController extends ChangeNotifier {
   // Streaming mouth kick & chunk bob
   double _chunkKick = 0.0;
 
-  // Idle fidgets
+  // Idle fidgets:
+  // 0 = chin + wink reference pose (2.5s)
+  // 1 = tuck/smooth bangs with right hand (1.4s)
+  // 2 = playful wave (1.3s)
+  // 3 = mini yawn (0.95s)
   double _nextFidgetAt = 24.0;
-  int _activeFidgetKind = -1; // 0=wave, 1=cheek, 2=antennaSpin, 3=yawn
+  int _activeFidgetKind = -1;
   double _fidgetRemaining = 0.0;
 
   // Sleepy tracking (checked inside ticker without Timer.periodic)
@@ -111,9 +118,9 @@ class AvatarMotionController extends ChangeNotifier {
   double _sleepyYawnRemaining = 0.0;
   double _nextYawnAt = 12.0;
 
-  // Antenna spring physics (1-frame lag behind body movement & tilt)
-  Offset _antennaPos = Offset.zero;
-  Offset _antennaVel = Offset.zero;
+  // Secondary hair & ahoge spring physics (lag behind body movement, tilt & drag)
+  Offset _hairSwayPos = Offset.zero;
+  Offset _hairSwayVel = Offset.zero;
 
   // Smoothly interpolated hand positions
   late Offset _leftHandPos;
@@ -200,6 +207,8 @@ class AvatarMotionController extends ChangeNotifier {
       _moodAge = 0.0;
       if (mood != AvatarMood.idle) {
         _isLocallySleepy = false;
+        _activeFidgetKind = -1;
+        _fidgetRemaining = 0.0;
       }
       _triggerSquash();
       _onMoodEntered(mood);
@@ -238,7 +247,7 @@ class AvatarMotionController extends ChangeNotifier {
       _isLocallySleepy = false;
       triggerLocalReaction(
         AvatarReaction.startle,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 350),
       );
     }
   }
@@ -249,15 +258,23 @@ class AvatarMotionController extends ChangeNotifier {
   }) {
     _lastInteraction = DateTime.now();
     _isLocallySleepy = false;
+    _activeFidgetKind = -1;
+    _fidgetRemaining = 0.0;
     _localReaction = reaction;
     _localReactionAge = 0.0;
-    _localReactionRemaining = (duration ?? _defaultReactionDuration(reaction))
-            .inMilliseconds /
+    _localReactionRemaining =
+        (duration ?? _defaultReactionDuration(reaction)).inMilliseconds /
         1000.0;
     _triggerSquash(
       peakX: reaction == AvatarReaction.boop ? 1.10 : 1.06,
       peakY: reaction == AvatarReaction.boop ? 0.89 : 0.93,
     );
+    if (reaction == AvatarReaction.boop || reaction == AvatarReaction.startle) {
+      _hairSwayVel += Offset(
+        reaction == AvatarReaction.boop ? 0.45 : 0.0,
+        -0.95,
+      );
+    }
     _spawnReactionParticles(reaction);
     _recomputeTargetExpression();
     if (!_isRunning || _reduceMotion) {
@@ -266,8 +283,8 @@ class AvatarMotionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Updates 3D drag tilt and eye-tracking from pointer local coordinates.
-  /// Returns `true` on the frame a horizontal "pet" gesture is detected!
+  /// Updates 3D drag tilt, eye-tracking, and directional hair spring impulse
+  /// from pointer local coordinates. Returns `true` when petting triggers.
   bool updateDrag(Offset localPosition, Size boxSize, Offset delta) {
     if (boxSize.isEmpty) return false;
     _lastInteraction = DateTime.now();
@@ -284,6 +301,16 @@ class AvatarMotionController extends ChangeNotifier {
     tiltNotifier.value = nextTilt;
     _dragFingerPupil = Offset(nx * 0.035, ny * 0.035);
 
+    // Feed drag stroke direction into the hair & ahoge spring (§2.7)
+    if (_sizeConfig.swayHair && !_reduceMotion) {
+      final dxNorm = (delta.dx / boxSize.width).clamp(-0.35, 0.35);
+      final dyNorm = (delta.dy / boxSize.height).clamp(-0.35, 0.35);
+      _hairSwayVel = Offset(
+        (_hairSwayVel.dx + dxNorm * 2.6).clamp(-1.8, 1.8),
+        (_hairSwayVel.dy + dyNorm * 1.4).clamp(-1.2, 1.2),
+      );
+    }
+
     // Detect horizontal petting (>= 3 direction flips within 1.2s)
     var petTriggered = false;
     if (delta.dx.abs() > 2.2) {
@@ -293,6 +320,10 @@ class AvatarMotionController extends ChangeNotifier {
         _petReversalTimes.removeWhere((t) => _elapsed - t > 1.2);
         if (_petReversalTimes.length >= 3) {
           _petReversalTimes.clear();
+          _hairSwayVel = Offset(
+            (_hairSwayVel.dx + sign * 0.85).clamp(-1.8, 1.8),
+            _hairSwayVel.dy,
+          );
           triggerLocalReaction(
             AvatarReaction.pet,
             duration: const Duration(milliseconds: 1200),
@@ -329,14 +360,14 @@ class AvatarMotionController extends ChangeNotifier {
   Duration _defaultReactionDuration(AvatarReaction r) {
     return switch (r) {
       AvatarReaction.boop => const Duration(milliseconds: 350),
-      AvatarReaction.wink => const Duration(milliseconds: 700),
+      AvatarReaction.wink => const Duration(milliseconds: 850),
       AvatarReaction.giggle => const Duration(milliseconds: 950),
       AvatarReaction.pet => const Duration(milliseconds: 1200),
       AvatarReaction.wave => const Duration(milliseconds: 1200),
       AvatarReaction.nod => const Duration(milliseconds: 550),
       AvatarReaction.success => const Duration(milliseconds: 2400),
       AvatarReaction.errorShake => const Duration(milliseconds: 550),
-      AvatarReaction.startle => const Duration(milliseconds: 300),
+      AvatarReaction.startle => const Duration(milliseconds: 380),
     };
   }
 
@@ -359,6 +390,19 @@ class AvatarMotionController extends ChangeNotifier {
       final base = expressionForMood(effectiveMood, poseMode: _poseMode);
       if (_localReaction != null) {
         next = expressionForReaction(_localReaction!, base);
+      } else if (effectiveMood == AvatarMood.idle &&
+          _activeFidgetKind == 0 &&
+          _fidgetRemaining > 0) {
+        // Idle fidget 0: signature reference pose (chin + wink for 2.5s)
+        next = base.copyWith(
+          winkRight: true,
+          armPose: ArmPose.chin,
+          headTilt: 0.34,
+          browRaise: 0.28,
+          mouthCurve: 0.88,
+          mouthOpen: 0.36,
+          blush: 0.68,
+        );
       } else {
         next = base;
       }
@@ -378,21 +422,23 @@ class AvatarMotionController extends ChangeNotifier {
     final (lh, rh) = handTargetsForPose(_currentExpression.armPose);
     _leftHandPos = lh;
     _rightHandPos = rh;
-    _antennaPos = Offset.zero;
-    _antennaVel = Offset.zero;
+    _hairSwayPos = Offset.zero;
+    _hairSwayVel = Offset.zero;
     tiltNotifier.value = Offset.zero;
     _particles
       ..clear()
       ..addAll(
         _sizeConfig.maxParticles > 0
             ? staticParticlesForMood(effectiveMood)
-                .take(_sizeConfig.maxParticles)
+                  .take(_sizeConfig.maxParticles)
             : const [],
       );
     _effectsVersion++;
     _frame = AvatarFrame(
+      headTiltZ: _currentExpression.headTilt * 0.26,
       leftHandPos: _leftHandPos,
       rightHandPos: _rightHandPos,
+      isQuestionAhoge: effectiveMood == AvatarMood.error,
       pupilOffset: effectiveMood == AvatarMood.listening
           ? const Offset(0, 0.025)
           : effectiveMood == AvatarMood.thinking
@@ -427,12 +473,14 @@ class AvatarMotionController extends ChangeNotifier {
           AppColors.tintBlueFg,
         ];
         for (var i = 0; i < count; i++) {
-          final angle = -math.pi * 0.85 + (i / math.max(1, count - 1)) * math.pi * 0.7;
+          final angle =
+              -math.pi * 0.85 +
+              (i / math.max(1, count - 1)) * math.pi * 0.7;
           final speed = 0.22 + _random.nextDouble() * 0.14;
           _spawnParticle(
             AvatarParticle(
               kind: AvatarParticleKind.sparkle,
-              position: Offset(0.5 + math.cos(angle) * 0.25, 0.32),
+              position: Offset(0.5 + math.cos(angle) * 0.25, 0.30),
               velocity: Offset(math.cos(angle) * speed, math.sin(angle) * speed),
               age: 0,
               lifetime: 0.95 + _random.nextDouble() * 0.35,
@@ -446,7 +494,7 @@ class AvatarMotionController extends ChangeNotifier {
         _spawnParticle(
           AvatarParticle(
             kind: AvatarParticleKind.sweat,
-            position: const Offset(0.79, 0.34),
+            position: const Offset(0.80, 0.34),
             velocity: const Offset(0.01, 0.10),
             age: 0,
             lifetime: 1.25,
@@ -466,7 +514,7 @@ class AvatarMotionController extends ChangeNotifier {
         _spawnParticle(
           AvatarParticle(
             kind: AvatarParticleKind.heart,
-            position: Offset(0.56 + (_random.nextDouble() - 0.5) * 0.2, 0.22),
+            position: Offset(0.56 + (_random.nextDouble() - 0.5) * 0.2, 0.20),
             velocity: const Offset(0.03, -0.18),
             age: 0,
             lifetime: 0.9,
@@ -479,7 +527,7 @@ class AvatarMotionController extends ChangeNotifier {
           _spawnParticle(
             AvatarParticle(
               kind: AvatarParticleKind.heart,
-              position: Offset(0.32 + i * 0.18, 0.25 - i * 0.03),
+              position: Offset(0.32 + i * 0.18, 0.23 - i * 0.03),
               velocity: Offset((i - 1) * 0.06, -0.18 - i * 0.03),
               age: 0,
               lifetime: 1.05 + i * 0.12,
@@ -496,7 +544,7 @@ class AvatarMotionController extends ChangeNotifier {
               kind: i == 1
                   ? AvatarParticleKind.heart
                   : AvatarParticleKind.sparkle,
-              position: Offset(0.24 + i * 0.26, 0.24),
+              position: Offset(0.24 + i * 0.26, 0.22),
               velocity: Offset((i - 1) * 0.10, -0.20),
               age: 0,
               lifetime: 0.95,
@@ -510,12 +558,25 @@ class AvatarMotionController extends ChangeNotifier {
         _spawnParticle(
           AvatarParticle(
             kind: AvatarParticleKind.sparkle,
-            position: const Offset(0.82, 0.20),
+            position: const Offset(0.82, 0.18),
             velocity: const Offset(0.05, -0.12),
             age: 0,
             lifetime: 0.8,
             scale: 0.9,
-            color: AppColors.primaryLight,
+            color: AppColors.avatarStarClip,
+          ),
+        );
+      case AvatarReaction.startle:
+        _spawnParticle(
+          AvatarParticle(
+            kind: AvatarParticleKind.exclamation,
+            position: const Offset(0.52, 0.09),
+            velocity: const Offset(0.0, -0.07),
+            age: 0,
+            lifetime: 0.65,
+            scale: 1.15,
+            color: AppColors.tintAmberFg,
+            label: '!',
           ),
         );
       case AvatarReaction.errorShake:
@@ -559,10 +620,9 @@ class AvatarMotionController extends ChangeNotifier {
 
   void _onTick(Duration elapsedDuration) {
     final nowSeconds = elapsedDuration.inMicroseconds / 1e6;
-    final dt = (_lastTickSeconds == 0.0
-            ? 0.016
-            : (nowSeconds - _lastTickSeconds))
-        .clamp(0.001, 0.05);
+    final dt =
+        (_lastTickSeconds == 0.0 ? 0.016 : (nowSeconds - _lastTickSeconds))
+            .clamp(0.001, 0.05);
     _lastTickSeconds = nowSeconds;
     _elapsed += dt;
     _moodAge += dt;
@@ -587,7 +647,48 @@ class AvatarMotionController extends ChangeNotifier {
       }
     }
 
-    // 3. Interpolate expression (280ms easeOutCubic)
+    final mood = effectiveMood;
+
+    // 3. Idle fidgets (every 20-40s in idle):
+    // 0 = chin+wink reference pose (2.5s), 1 = smooth bangs (1.4s),
+    // 2 = wave (1.3s), 3 = mini yawn (0.95s)
+    if (mood == AvatarMood.idle &&
+        _localReaction == null &&
+        _customExpression == null) {
+      if (_fidgetRemaining > 0) {
+        _fidgetRemaining -= dt;
+        if (_fidgetRemaining <= 0) {
+          final endedKind = _activeFidgetKind;
+          _activeFidgetKind = -1;
+          if (endedKind == 0) {
+            _recomputeTargetExpression();
+          }
+        }
+      } else if (_elapsed >= _nextFidgetAt) {
+        _activeFidgetKind = _random.nextInt(4);
+        _fidgetRemaining = switch (_activeFidgetKind) {
+          0 => 2.5,
+          1 => 1.4,
+          2 => 1.3,
+          _ => 0.95,
+        };
+        if (_activeFidgetKind == 0) {
+          _recomputeTargetExpression();
+        } else if (_activeFidgetKind == 1) {
+          _hairSwayVel += const Offset(0.35, -0.2);
+        }
+        _scheduleNextFidget();
+      }
+    } else if (_activeFidgetKind != -1) {
+      final endedKind = _activeFidgetKind;
+      _activeFidgetKind = -1;
+      _fidgetRemaining = 0.0;
+      if (endedKind == 0) {
+        _recomputeTargetExpression();
+      }
+    }
+
+    // 4. Interpolate expression (280ms easeOutCubic)
     if (_exprTransitionElapsed < _exprTransitionDuration) {
       _exprTransitionElapsed = math.min(
         _exprTransitionDuration,
@@ -602,9 +703,7 @@ class AvatarMotionController extends ChangeNotifier {
       );
     }
 
-    final mood = effectiveMood;
-
-    // 4. Blinking
+    // 5. Blinking
     var blinkAmount = 0.0;
     if (_blinkElapsed >= 0) {
       _blinkElapsed += dt;
@@ -629,27 +728,12 @@ class AvatarMotionController extends ChangeNotifier {
       _pendingDoubleBlink = _random.nextDouble() < 0.20;
     }
 
-    // 5. Idle fidgets (every 20–40s in idle)
-    if (mood == AvatarMood.idle && _localReaction == null) {
-      if (_fidgetRemaining > 0) {
-        _fidgetRemaining -= dt;
-        if (_fidgetRemaining <= 0) _activeFidgetKind = -1;
-      } else if (_elapsed >= _nextFidgetAt) {
-        _activeFidgetKind = _random.nextInt(4);
-        _fidgetRemaining = _activeFidgetKind == 3 ? 0.9 : 1.3;
-        _scheduleNextFidget();
-      }
-    } else {
-      _activeFidgetKind = -1;
-      _fidgetRemaining = 0.0;
-    }
-
     // Occasional sleepy yawn (900ms)
     if (mood == AvatarMood.sleepy) {
       if (_sleepyYawnRemaining > 0) {
         _sleepyYawnRemaining -= dt;
       } else if (_elapsed >= _nextYawnAt) {
-        _sleepyYawnRemaining = 0.9;
+        _sleepyYawnRemaining = 0.95;
         _nextYawnAt = _elapsed + 9.0 + _random.nextDouble() * 7.0;
       }
     } else {
@@ -666,15 +750,20 @@ class AvatarMotionController extends ChangeNotifier {
     final breatheScaleY =
         1.0 + math.sin((_elapsed * 2 * math.pi) / breathPeriod) * 0.02;
 
-    var floatY = math.sin((_elapsed * 2 * math.pi) / 4.0) * 0.03;
+    var floatY = math.sin((_elapsed * 2 * math.pi) / 4.0) * 0.024;
     if (mood == AvatarMood.offline || mood == AvatarMood.sleepy) {
-      floatY = floatY * 0.45 + 0.024;
+      floatY = floatY * 0.45 + 0.022;
+      if (mood == AvatarMood.sleepy) {
+        // Gentle drowsy head-nod bob
+        floatY += math.max(0.0, math.sin(_elapsed * 1.4)) * 0.024;
+      }
     }
 
     // Success double hop
     var extraSquashX = 1.0;
     var extraSquashY = 1.0;
-    if (mood == AvatarMood.success || _localReaction == AvatarReaction.success) {
+    if (mood == AvatarMood.success ||
+        _localReaction == AvatarReaction.success) {
       final t = _localReaction == AvatarReaction.success
           ? _localReactionAge
           : _moodAge;
@@ -687,30 +776,37 @@ class AvatarMotionController extends ChangeNotifier {
       }
     }
 
-    // Streaming chunk bob & talking mouth kick
+    // Streaming chunk bob & talking mouth kick ("a" / "i" vowel alternation)
     _chunkKick = math.max(0.0, _chunkKick - dt * 4.5);
     if (_chunkKick > 0) {
-      floatY -= _chunkKick * 0.022;
+      floatY -= _chunkKick * 0.020;
     }
 
+    final isYawning =
+        _sleepyYawnRemaining > 0 ||
+        (_activeFidgetKind == 3 && _fidgetRemaining > 0);
     var mouthTalkBoost = 0.0;
+    var talkShape = 0.0;
     if (mood == AvatarMood.streaming) {
       final wave = (math.sin(_elapsed * 7.0 * 2 * math.pi) + 1) * 0.5;
-      mouthTalkBoost = 0.10 + wave * 0.30 + _chunkKick * 0.25 - _currentExpression.mouthOpen;
+      mouthTalkBoost =
+          0.10 + wave * 0.30 + _chunkKick * 0.25 - _currentExpression.mouthOpen;
       mouthTalkBoost = mouthTalkBoost.clamp(-0.2, 0.55);
-    } else if (_sleepyYawnRemaining > 0 ||
-        (_activeFidgetKind == 3 && _fidgetRemaining > 0)) {
+      talkShape = (math.sin(_elapsed * 4.8 * 2 * math.pi) + 1) * 0.5;
+    } else if (isYawning) {
       mouthTalkBoost = 0.78;
     } else if (_localReaction == AvatarReaction.giggle) {
       mouthTalkBoost = (math.sin(_elapsed * 16.0) + 1) * 0.12;
     }
 
     // Head tilt & horizontal shake
-    var headTiltZ = 0.0;
+    var headTiltZ = _currentExpression.headTilt * 0.26;
     if (mood == AvatarMood.thinking) {
-      headTiltZ = math.sin(_elapsed * 1.15) * 0.105; // ±6 degrees
+      headTiltZ += math.sin(_elapsed * 1.15) * 0.065;
+    } else if (mood == AvatarMood.sleepy) {
+      headTiltZ += math.sin(_elapsed * 1.4) * 0.08;
     } else if (_localReaction == AvatarReaction.pet) {
-      headTiltZ = math.sin(_elapsed * 6.5) * 0.11;
+      headTiltZ += math.sin(_elapsed * 6.5) * 0.095;
     } else if (_localReaction == AvatarReaction.nod) {
       floatY += math.sin(_localReactionAge * 12.0) * 0.028;
     }
@@ -760,16 +856,16 @@ class AvatarMotionController extends ChangeNotifier {
     } else {
       switch (mood) {
         case AvatarMood.listening:
-          desiredPupil = const Offset(0, 0.026);
+          desiredPupil = const Offset(0, 0.022);
         case AvatarMood.thinking:
           final scan = math.sin(_elapsed * 1.4) > 0.55
-              ? math.sin(_elapsed * 4.0) * 0.016
+              ? math.sin(_elapsed * 4.0) * 0.014
               : 0.0;
-          desiredPupil = Offset(0.020 + scan, -0.020);
+          desiredPupil = Offset(0.022 + scan, -0.020);
         case AvatarMood.streaming:
-          desiredPupil = Offset(math.sin(_elapsed * 3.6) * 0.026, 0.008);
+          desiredPupil = Offset(math.sin(_elapsed * 3.6) * 0.026, 0.006);
         case AvatarMood.connecting:
-          desiredPupil = Offset(math.sin(_elapsed * 5.2) * 0.030, 0.0);
+          desiredPupil = Offset(math.sin(_elapsed * 5.2) * 0.028, 0.0);
         case AvatarMood.error:
           desiredPupil = Offset(
             math.sin(_elapsed * 32.0) * 0.006,
@@ -781,10 +877,10 @@ class AvatarMotionController extends ChangeNotifier {
             desiredPupil = _glanceTarget;
           } else if (_elapsed >= _nextGlanceAt) {
             final angle = _random.nextDouble() * 2 * math.pi;
-            final mag = 0.016 + _random.nextDouble() * 0.016;
+            final mag = 0.015 + _random.nextDouble() * 0.015;
             _glanceTarget = Offset(
               math.cos(angle) * mag,
-              math.sin(angle) * mag * 0.75,
+              math.sin(angle) * mag * 0.72,
             );
             _glanceRemaining = 0.6 + _random.nextDouble() * 0.6;
             _scheduleNextGlance();
@@ -796,35 +892,37 @@ class AvatarMotionController extends ChangeNotifier {
     final pupilEase = (dt * 12.0).clamp(0.0, 1.0);
     _currentPupil = Offset.lerp(_currentPupil, desiredPupil, pupilEase)!;
 
-    // 9. Spring-lagged antenna physics
+    // 9. Spring-lagged secondary hair & ahoge physics
     final tilt = tiltNotifier.value;
-    var antennaTarget = Offset(
-      -headTiltZ * 0.45 + tilt.dy * 0.22 - shakeX * 1.8,
-      -floatY * 0.85 + tilt.dx * 0.14,
+    var hairTarget = Offset(
+      -headTiltZ * 0.42 + tilt.dy * 0.24 - shakeX * 1.9,
+      -floatY * 0.90 + tilt.dx * 0.14,
     );
-    if (_activeFidgetKind == 2 && _fidgetRemaining > 0) {
-      antennaTarget += Offset(
-        math.cos(_elapsed * 10.0) * 0.06,
-        math.sin(_elapsed * 10.0) * 0.04,
+    if (_activeFidgetKind == 1 && _fidgetRemaining > 0) {
+      hairTarget += Offset(
+        math.sin(_elapsed * 7.5) * 0.035,
+        -0.02,
       );
     }
-    const kStiffness = 140.0;
-    const kDamping = 11.5;
-    final ax = (antennaTarget.dx - _antennaPos.dx) * kStiffness -
-        _antennaVel.dx * kDamping;
-    final ay = (antennaTarget.dy - _antennaPos.dy) * kStiffness -
-        _antennaVel.dy * kDamping;
-    _antennaVel = Offset(
-      _antennaVel.dx + ax * dt,
-      _antennaVel.dy + ay * dt,
+    const kStiffness = 132.0;
+    const kDamping = 10.8;
+    final ax =
+        (hairTarget.dx - _hairSwayPos.dx) * kStiffness -
+        _hairSwayVel.dx * kDamping;
+    final ay =
+        (hairTarget.dy - _hairSwayPos.dy) * kStiffness -
+        _hairSwayVel.dy * kDamping;
+    _hairSwayVel = Offset(
+      _hairSwayVel.dx + ax * dt,
+      _hairSwayVel.dy + ay * dt,
     );
-    _antennaPos = Offset(
-      (_antennaPos.dx + _antennaVel.dx * dt).clamp(-0.11, 0.11),
-      (_antennaPos.dy + _antennaVel.dy * dt).clamp(-0.08, 0.08),
+    _hairSwayPos = Offset(
+      (_hairSwayPos.dx + _hairSwayVel.dx * dt).clamp(-0.14, 0.14),
+      (_hairSwayPos.dy + _hairSwayVel.dy * dt).clamp(-0.10, 0.10),
     );
 
-    // Antenna glow pulse
-    final antennaPulse = switch (mood) {
+    // Star clip glow pulse
+    final accentPulse = switch (mood) {
       AvatarMood.thinking =>
         0.75 + 0.35 * ((math.sin((_elapsed * 2 * math.pi) / 1.2) + 1) * 0.5),
       AvatarMood.streaming =>
@@ -832,20 +930,24 @@ class AvatarMotionController extends ChangeNotifier {
       AvatarMood.connecting =>
         0.65 + 0.45 * ((math.sin(_elapsed * 6.5) + 1) * 0.5),
       AvatarMood.error => _moodAge < 0.8
-          ? (math.sin(_moodAge * 16.0) > 0 ? 1.2 : 0.35)
+          ? (math.sin(_moodAge * 16.0) > 0 ? 1.25 : 0.35)
           : 0.85,
       _ => 0.92 + 0.08 * math.sin(_elapsed * 2.0),
     };
 
-    // 10. Smooth hand interpolation + pose animation (wave / type / idle wave fidget)
+    // 10. Smooth hand interpolation + pose animation
     var effectiveArmPose = _currentExpression.armPose;
-    if (_activeFidgetKind == 0 && _fidgetRemaining > 0) {
+    if (_activeFidgetKind == 2 && _fidgetRemaining > 0) {
       effectiveArmPose = ArmPose.wave;
-    } else if (_activeFidgetKind == 1 && _fidgetRemaining > 0) {
-      effectiveArmPose = ArmPose.chin;
     }
     var (targetL, targetR) = handTargetsForPose(effectiveArmPose);
-    if (effectiveArmPose == ArmPose.wave) {
+    if (_activeFidgetKind == 1 && _fidgetRemaining > 0) {
+      // Smoothly tuck/brush side bangs with right hand
+      targetR = Offset(
+        0.70 + math.sin(_elapsed * 8.0) * 0.02,
+        0.35 + math.cos(_elapsed * 8.0) * 0.015,
+      );
+    } else if (effectiveArmPose == ArmPose.wave) {
       targetR = Offset(
         targetR.dx + math.sin(_elapsed * 12.0) * 0.045,
         targetR.dy + math.cos(_elapsed * 12.0) * 0.028,
@@ -858,6 +960,10 @@ class AvatarMotionController extends ChangeNotifier {
       final bounce = math.sin(_elapsed * 10.0) * 0.025;
       targetL = Offset(targetL.dx, targetL.dy + bounce);
       targetR = Offset(targetR.dx, targetR.dy - bounce);
+    } else if (effectiveArmPose == ArmPose.coverMouth) {
+      final giggleBounce = math.sin(_elapsed * 18.0) * 0.014;
+      targetL = Offset(targetL.dx, targetL.dy + giggleBounce);
+      targetR = Offset(targetR.dx, targetR.dy - giggleBounce);
     }
     final handEase = (dt * 11.0).clamp(0.0, 1.0);
     _leftHandPos = Offset.lerp(_leftHandPos, targetL, handEase)!;
@@ -875,10 +981,13 @@ class AvatarMotionController extends ChangeNotifier {
       pupilOffset: _currentPupil,
       squashX: squashX,
       squashY: squashY,
-      antennaOffset: _antennaPos,
-      antennaPulse: antennaPulse,
+      hairSwayOffset: _hairSwayPos,
+      accentPulse: accentPulse,
       blinkAmount: blinkAmount,
       mouthTalkBoost: mouthTalkBoost,
+      talkShape: talkShape,
+      isYawning: isYawning,
+      isQuestionAhoge: mood == AvatarMood.error,
       leftHandPos: _leftHandPos,
       rightHandPos: _rightHandPos,
       bodyScale: mood == AvatarMood.listening ? 1.04 : 1.0,
@@ -895,7 +1004,7 @@ class AvatarMotionController extends ChangeNotifier {
           _spawnParticle(
             AvatarParticle(
               kind: AvatarParticleKind.sleepZ,
-              position: const Offset(0.80, 0.28),
+              position: const Offset(0.80, 0.24),
               velocity: const Offset(0.035, -0.11),
               age: 0,
               lifetime: 1.8,
@@ -909,7 +1018,7 @@ class AvatarMotionController extends ChangeNotifier {
           _spawnParticle(
             AvatarParticle(
               kind: AvatarParticleKind.thinkingDot,
-              position: const Offset(0.87, 0.26),
+              position: const Offset(0.87, 0.24),
               velocity: const Offset(0.015, -0.06),
               age: 0,
               lifetime: 1.25,

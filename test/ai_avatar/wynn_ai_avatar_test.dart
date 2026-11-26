@@ -1,9 +1,15 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wynndiff/features/ai_avatar/domain/avatar_expression.dart';
 import 'package:wynndiff/features/ai_avatar/domain/avatar_mood.dart';
+import 'package:wynndiff/features/ai_avatar/presentation/controllers/avatar_frame.dart';
+import 'package:wynndiff/features/ai_avatar/presentation/painters/chibi_body_painter.dart';
 import 'package:wynndiff/features/ai_avatar/presentation/renderers/glb_avatar_slot.dart';
 import 'package:wynndiff/features/ai_avatar/presentation/renderers/rive_avatar_slot.dart';
+import 'package:wynndiff/features/ai_avatar/presentation/widgets/avatar_debug_page.dart';
 import 'package:wynndiff/features/ai_avatar/presentation/widgets/wynn_ai_avatar.dart';
 
 void main() {
@@ -137,5 +143,75 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(WynnAiAvatar), findsNWidgets(2));
+  });
+
+  testWidgets('AvatarDebugPage toggles dark background, framing, sliders & reactions cleanly', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: AvatarDebugPage()),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Toggle light/dark background & xs/sm framing & peek pose
+    await tester.tap(find.text('BG: Terang'));
+    await tester.pump();
+    expect(find.text('BG: Gelap'), findsOneWidget);
+
+    await tester.tap(find.text('Frame: xs'));
+    await tester.pump();
+    await tester.tap(find.text('Pose: peek'));
+    await tester.pump();
+
+    // Trigger wink (reference pose) and startle ("!") reactions
+    await tester.tap(find.text('wink'));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.tap(find.text('startle'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    // Enable custom sliders and scroll to verify v2 parameters appear
+    await tester.tap(find.text('Custom sliders'));
+    await tester.pump();
+    final listScrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('winkRight'),
+      300,
+      scrollable: listScrollable,
+    );
+    expect(find.text('ahogePerk'), findsOneWidget);
+    expect(find.text('accentGlow'), findsOneWidget);
+    expect(find.text('headTilt'), findsOneWidget);
+    expect(find.text('winkRight'), findsOneWidget);
+  });
+
+  test('ChibiBodyPainter paints 60 frames at lg (168dp) well within 16ms/frame budget', () {
+    final painter = ChibiBodyPainter(
+      staticExpression: expressionForReaction(
+        AvatarReaction.wink,
+        kMoodExpressions[AvatarMood.idle]!,
+      ),
+      staticFrame: const AvatarFrame(
+        hairSwayOffset: Offset(0.06, -0.02),
+        headTiltZ: 0.08,
+        pupilOffset: Offset(0.015, -0.01),
+      ),
+      avatarSize: AvatarSize.lg,
+      poseMode: AvatarPoseMode.peek,
+    );
+
+    final sw = Stopwatch()..start();
+    for (var i = 0; i < 60; i++) {
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(168, 168));
+      final picture = recorder.endRecording();
+      picture.dispose();
+    }
+    sw.stop();
+
+    final avgMs = sw.elapsedMicroseconds / 60.0 / 1000.0;
+    expect(avgMs, lessThan(16.0));
   });
 }

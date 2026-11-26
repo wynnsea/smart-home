@@ -58,6 +58,8 @@ class AvatarEffectsPainter extends CustomPainter {
           );
         case AvatarParticleKind.thinkingDot:
           _drawThinkingDots(canvas, r, p.color.withValues(alpha: opacity));
+        case AvatarParticleKind.exclamation:
+          _drawExclamation(canvas, r, p.color.withValues(alpha: opacity));
       }
 
       canvas.restore();
@@ -111,6 +113,20 @@ class AvatarEffectsPainter extends CustomPainter {
       );
       canvas.drawCircle(Offset(dx, 0), dotR, _fillPaint);
     }
+  }
+
+  void _drawExclamation(Canvas canvas, double r, Color color) {
+    _fillPaint.color = color;
+    final stemRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(0, -r * 0.35),
+        width: r * 0.46,
+        height: r * 1.25,
+      ),
+      Radius.circular(r * 0.23),
+    );
+    canvas.drawRRect(stemRect, _fillPaint);
+    canvas.drawCircle(Offset(0, r * 0.62), r * 0.25, _fillPaint);
   }
 
   void _drawTextGlyph(Canvas canvas, String text, double fontSize, Color color) {

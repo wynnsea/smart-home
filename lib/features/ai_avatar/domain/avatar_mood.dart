@@ -27,7 +27,7 @@ enum AvatarReaction {
   startle,
 }
 
-/// Hand / mitten placement poses.
+/// Hand / sleeve placement poses for chibi Wynn v2.
 enum ArmPose {
   rest,
   peek,
@@ -36,9 +36,10 @@ enum ArmPose {
   cheer,
   type,
   worry,
+  coverMouth,
 }
 
-/// Expressive eye shape variations.
+/// Expressive anime eye shape variations.
 enum EyeShape {
   normal,
   happy,
@@ -52,22 +53,22 @@ enum AvatarPoseMode {
   peek,
 }
 
-/// Standardized display sizes with tuned detail & particle budgets.
+/// Standardized display sizes with tuned framing, detail & particle budgets.
 enum AvatarSize {
-  xs(34, maxParticles: 0, showHands: false, swayAntenna: false),
-  sm(48, maxParticles: 3, showHands: true, swayAntenna: true),
-  md(88, maxParticles: 6, showHands: true, swayAntenna: true),
-  lg(168, maxParticles: 8, showHands: true, swayAntenna: true);
+  xs(34, maxParticles: 0, showHands: false, swayHair: false),
+  sm(48, maxParticles: 3, showHands: true, swayHair: true),
+  md(88, maxParticles: 6, showHands: true, swayHair: true),
+  lg(168, maxParticles: 8, showHands: true, swayHair: true);
 
   const AvatarSize(
     this.dp, {
     required this.maxParticles,
     required this.showHands,
-    required this.swayAntenna,
+    required this.swayHair,
   });
 
   final double dp;
   final int maxParticles;
   final bool showHands;
-  final bool swayAntenna;
+  final bool swayHair;
 }

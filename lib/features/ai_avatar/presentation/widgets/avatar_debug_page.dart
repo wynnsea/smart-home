@@ -8,6 +8,7 @@ import '../../domain/avatar_mood.dart';
 import 'wynn_ai_avatar.dart';
 
 /// Debug-only gallery showcasing all 9 moods across sizes (`xs`..`lg`),
+/// light/dark preview stage background toggle, framing preview toggle,
 /// live expression parameter sliders, and reaction triggers.
 class AvatarDebugPage extends StatefulWidget {
   const AvatarDebugPage({super.key});
@@ -18,7 +19,9 @@ class AvatarDebugPage extends StatefulWidget {
 
 class _AvatarDebugPageState extends State<AvatarDebugPage> {
   AvatarSize _selectedSize = AvatarSize.md;
+  AvatarSize _stageFraming = AvatarSize.lg;
   AvatarPoseMode _poseMode = AvatarPoseMode.standing;
+  bool _darkPreviewBg = false;
   bool _useCustomSliders = false;
   AvatarMood _previewMood = AvatarMood.idle;
   AvatarExpression _customExpression = kMoodExpressions[AvatarMood.idle]!;
@@ -27,6 +30,13 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
 
   @override
   Widget build(BuildContext context) {
+    final stageBgColor = _darkPreviewBg
+        ? const Color(0xFF1A162B)
+        : Colors.white.withValues(alpha: 0.72);
+    final stageBorderColor = _darkPreviewBg
+        ? AppColors.primaryLight.withValues(alpha: 0.32)
+        : AppColors.borderSoft;
+
     return Scaffold(
       body: EtherealBackground(
         child: SafeArea(
@@ -44,9 +54,19 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Preview Avatar "Wynn"',
+                        'Preview Avatar "Wynn" v2',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
+                    ),
+                    GlassCircleButton(
+                      icon: _darkPreviewBg
+                          ? Icons.light_mode_rounded
+                          : Icons.dark_mode_rounded,
+                      tooltip: _darkPreviewBg
+                          ? 'Background terang'
+                          : 'Background gelap',
+                      onTap: () =>
+                          setState(() => _darkPreviewBg = !_darkPreviewBg),
                     ),
                   ],
                 ),
@@ -55,15 +75,29 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 28),
                   children: [
-                    // Hero stage preview
+                    // Hero stage preview with light/dark surface & framing toggle
                     GlassCard(
                       child: Column(
                         children: [
-                          SizedBox(
-                            height: 196,
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            height: 204,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: stageBgColor,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: stageBorderColor),
+                            ),
                             child: Center(
                               child: WynnAiAvatar(
-                                size: AvatarSize.lg,
+                                size: _stageFraming,
+                                customSize: _stageFraming == AvatarSize.lg
+                                    ? 168
+                                    : _stageFraming == AvatarSize.md
+                                    ? 124
+                                    : _stageFraming == AvatarSize.sm
+                                    ? 88
+                                    : 64,
                                 pose: _poseMode,
                                 moodOverride: _previewMood,
                                 expressionOverride: _useCustomSliders
@@ -74,14 +108,31 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Text(
                             _useCustomSliders
-                                ? 'Custom Sliders'
-                                : '${_previewMood.name} (${_previewMood.semanticLabel})',
+                                ? 'Custom Sliders · framing ${_stageFraming.name}'
+                                : '${_previewMood.name} (${_previewMood.semanticLabel}) · framing ${_stageFraming.name}',
+                            textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              for (final framing in AvatarSize.values)
+                                ChoiceChip(
+                                  label: Text('Frame: ${framing.name}'),
+                                  selected: _stageFraming == framing,
+                                  selectedColor: AppColors.primarySoft,
+                                  onSelected: (_) =>
+                                      setState(() => _stageFraming = framing),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
                             runSpacing: 6,
@@ -95,6 +146,15 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                                   onSelected: (_) =>
                                       setState(() => _poseMode = pose),
                                 ),
+                              FilterChip(
+                                label: Text(
+                                  _darkPreviewBg ? 'BG: Gelap' : 'BG: Terang',
+                                ),
+                                selected: _darkPreviewBg,
+                                selectedColor: AppColors.primarySoft,
+                                onSelected: (v) =>
+                                    setState(() => _darkPreviewBg = v),
+                              ),
                               FilterChip(
                                 label: const Text('Custom sliders'),
                                 selected: _useCustomSliders,
@@ -143,7 +203,11 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                             ButtonSegment(value: AvatarSize.sm, label: Text('sm')),
                             ButtonSegment(value: AvatarSize.md, label: Text('md')),
                           ],
-                          selected: {_selectedSize == AvatarSize.lg ? AvatarSize.md : _selectedSize},
+                          selected: {
+                            _selectedSize == AvatarSize.lg
+                                ? AvatarSize.md
+                                : _selectedSize,
+                          },
                           onSelectionChanged: (set) =>
                               setState(() => _selectedSize = set.first),
                         ),
@@ -181,16 +245,25 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Expanded(
-                                child: Center(
-                                  child: WynnAiAvatar(
-                                    size: _selectedSize,
-                                    customSize: _selectedSize == AvatarSize.md
-                                        ? 68
-                                        : null,
-                                    pose: _poseMode,
-                                    moodOverride: mood,
-                                    interactive: false,
-                                    animate: false,
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: _darkPreviewBg
+                                        ? const Color(0xFF1F1A33)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: WynnAiAvatar(
+                                      size: _selectedSize,
+                                      customSize: _selectedSize == AvatarSize.md
+                                          ? 68
+                                          : null,
+                                      pose: _poseMode,
+                                      moodOverride: mood,
+                                      interactive: false,
+                                      animate: false,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -281,23 +354,33 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                               ),
                             ),
                             _ExprSlider(
-                              label: 'earPerk',
-                              value: _customExpression.earPerk,
+                              label: 'ahogePerk',
+                              value: _customExpression.ahogePerk,
                               min: 0,
                               max: 1,
                               onChanged: (v) => setState(
                                 () => _customExpression = _customExpression
-                                    .copyWith(earPerk: v),
+                                    .copyWith(ahogePerk: v),
                               ),
                             ),
                             _ExprSlider(
-                              label: 'antennaGlow',
-                              value: _customExpression.antennaGlow,
+                              label: 'accentGlow',
+                              value: _customExpression.accentGlow,
                               min: 0,
                               max: 1,
                               onChanged: (v) => setState(
                                 () => _customExpression = _customExpression
-                                    .copyWith(antennaGlow: v),
+                                    .copyWith(accentGlow: v),
+                              ),
+                            ),
+                            _ExprSlider(
+                              label: 'headTilt',
+                              value: _customExpression.headTilt,
+                              min: -1,
+                              max: 1,
+                              onChanged: (v) => setState(
+                                () => _customExpression = _customExpression
+                                    .copyWith(headTilt: v),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -305,6 +388,15 @@ class _AvatarDebugPageState extends State<AvatarDebugPage> {
                               spacing: 6,
                               runSpacing: 6,
                               children: [
+                                FilterChip(
+                                  label: const Text('winkRight'),
+                                  selected: _customExpression.winkRight,
+                                  selectedColor: AppColors.primarySoft,
+                                  onSelected: (v) => setState(
+                                    () => _customExpression = _customExpression
+                                        .copyWith(winkRight: v),
+                                  ),
+                                ),
                                 for (final shape in EyeShape.values)
                                   ChoiceChip(
                                     label: Text('Eye: ${shape.name}'),

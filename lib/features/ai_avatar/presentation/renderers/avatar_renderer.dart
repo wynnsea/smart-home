@@ -3,12 +3,12 @@ import 'package:material_ui/material_ui.dart';
 import '../../domain/avatar_expression.dart';
 import '../../domain/avatar_mood.dart';
 import '../controllers/avatar_motion_controller.dart';
-import '../painters/avatar_body_painter.dart';
 import '../painters/avatar_effects_painter.dart';
 
 /// Identifies which rendering backend draws the avatar visual.
 enum AvatarRendererKind {
   procedural,
+  layeredSprite,
   rive,
   glb,
 }
@@ -39,12 +39,12 @@ class AvatarRenderInput {
   final AvatarSize avatarSize;
   final AvatarPoseMode poseMode;
   final AvatarMotionController? motionController;
-  final AvatarBodyPainter? bodyPainter;
+  final CustomPainter? bodyPainter;
   final AvatarEffectsPainter? effectsPainter;
 }
 
-/// Pluggable visual renderer interface so procedural, Rive, or GLB backends
-/// can be swapped without modifying mood derivation or gesture handling.
+/// Pluggable visual renderer interface so procedural, layered-sprite, Rive,
+/// or GLB backends can be swapped without modifying mood derivation or gestures.
 abstract interface class AvatarRenderer {
   AvatarRendererKind get kind;
 

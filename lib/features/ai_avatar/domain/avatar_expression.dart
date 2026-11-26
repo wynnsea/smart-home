@@ -5,7 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/app_colors.dart';
 import 'avatar_mood.dart';
 
-/// Interpolatable facial & body expression parameters for "Wynn".
+/// Interpolatable facial & body expression parameters for chibi "Wynn" v2.
 @immutable
 class AvatarExpression {
   const AvatarExpression({
@@ -16,10 +16,11 @@ class AvatarExpression {
     required this.mouthCurve,
     required this.mouthOpen,
     required this.blush,
-    required this.earPerk,
+    required this.ahogePerk,
     required this.armPose,
-    required this.antennaColor,
-    required this.antennaGlow,
+    required this.accentColor,
+    required this.accentGlow,
+    this.headTilt = 0.0,
     this.winkRight = false,
   });
 
@@ -27,7 +28,7 @@ class AvatarExpression {
   final double eyeOpen;
   final EyeShape eyeShape;
 
-  /// -1.0 (worried / outer down) .. +1.0 (focused / angry inward)
+  /// -1.0 (worried / outer down) .. +1.0 (focused / angled inward)
   final double browTilt;
 
   /// -1.0 (low) .. +1.0 (raised)
@@ -36,20 +37,25 @@ class AvatarExpression {
   /// -1.0 (frown) .. +1.0 (big smile)
   final double mouthCurve;
 
-  /// 0.0 (closed) .. 1.0 (open "o")
+  /// 0.0 (closed) .. 1.0 (open "o" / wide grin)
   final double mouthOpen;
 
-  /// 0.0 .. 1.0 blush cheek intensity
+  /// 0.0 .. 1.0 blush cheek intensity (> 0.6 draws anime blush lines)
   final double blush;
 
-  /// 0.0 .. 1.0 hoodie ear perk lift
-  final double earPerk;
+  /// 0.0 (droopy) .. 1.0 (perky upright ahoge strand)
+  final double ahogePerk;
 
   final ArmPose armPose;
-  final Color antennaColor;
 
-  /// 0.0 .. 1.0 antenna orb glow strength
-  final double antennaGlow;
+  /// Accent glow color for the star hair clip & ahoge shimmer.
+  final Color accentColor;
+
+  /// 0.0 .. 1.0 star clip glow intensity.
+  final double accentGlow;
+
+  /// -1.0 .. +1.0 sideways head tilt (e.g. +0.35 for chin/thinking/wink).
+  final double headTilt;
 
   /// True when winking with the right eye closed while left stays open.
   final bool winkRight;
@@ -62,10 +68,11 @@ class AvatarExpression {
     double? mouthCurve,
     double? mouthOpen,
     double? blush,
-    double? earPerk,
+    double? ahogePerk,
     ArmPose? armPose,
-    Color? antennaColor,
-    double? antennaGlow,
+    Color? accentColor,
+    double? accentGlow,
+    double? headTilt,
     bool? winkRight,
   }) {
     return AvatarExpression(
@@ -76,10 +83,11 @@ class AvatarExpression {
       mouthCurve: mouthCurve ?? this.mouthCurve,
       mouthOpen: mouthOpen ?? this.mouthOpen,
       blush: blush ?? this.blush,
-      earPerk: earPerk ?? this.earPerk,
+      ahogePerk: ahogePerk ?? this.ahogePerk,
       armPose: armPose ?? this.armPose,
-      antennaColor: antennaColor ?? this.antennaColor,
-      antennaGlow: antennaGlow ?? this.antennaGlow,
+      accentColor: accentColor ?? this.accentColor,
+      accentGlow: accentGlow ?? this.accentGlow,
+      headTilt: headTilt ?? this.headTilt,
       winkRight: winkRight ?? this.winkRight,
     );
   }
@@ -100,10 +108,11 @@ class AvatarExpression {
       mouthCurve: lerpDouble(a.mouthCurve, b.mouthCurve, clamped)!,
       mouthOpen: lerpDouble(a.mouthOpen, b.mouthOpen, clamped)!,
       blush: lerpDouble(a.blush, b.blush, clamped)!,
-      earPerk: lerpDouble(a.earPerk, b.earPerk, clamped)!,
+      ahogePerk: lerpDouble(a.ahogePerk, b.ahogePerk, clamped)!,
       armPose: clamped < 0.5 ? a.armPose : b.armPose,
-      antennaColor: Color.lerp(a.antennaColor, b.antennaColor, clamped)!,
-      antennaGlow: lerpDouble(a.antennaGlow, b.antennaGlow, clamped)!,
+      accentColor: Color.lerp(a.accentColor, b.accentColor, clamped)!,
+      accentGlow: lerpDouble(a.accentGlow, b.accentGlow, clamped)!,
+      headTilt: lerpDouble(a.headTilt, b.headTilt, clamped)!,
       winkRight: clamped < 0.5 ? a.winkRight : b.winkRight,
     );
   }
@@ -119,10 +128,11 @@ class AvatarExpression {
         other.mouthCurve == mouthCurve &&
         other.mouthOpen == mouthOpen &&
         other.blush == blush &&
-        other.earPerk == earPerk &&
+        other.ahogePerk == ahogePerk &&
         other.armPose == armPose &&
-        other.antennaColor == antennaColor &&
-        other.antennaGlow == antennaGlow &&
+        other.accentColor == accentColor &&
+        other.accentGlow == accentGlow &&
+        other.headTilt == headTilt &&
         other.winkRight == winkRight;
   }
 
@@ -135,132 +145,142 @@ class AvatarExpression {
     mouthCurve,
     mouthOpen,
     blush,
-    earPerk,
+    ahogePerk,
     armPose,
-    antennaColor,
-    antennaGlow,
+    accentColor,
+    accentGlow,
+    headTilt,
     winkRight,
   );
 }
 
-/// Base expression preset for each [AvatarMood] following spec Table 1.4.
+/// Base expression preset for each [AvatarMood] following Wynn v2 spec §2.7.
 const Map<AvatarMood, AvatarExpression> kMoodExpressions = {
   AvatarMood.idle: AvatarExpression(
     eyeOpen: 1.0,
     eyeShape: EyeShape.normal,
     browTilt: 0.0,
-    browRaise: 0.0,
-    mouthCurve: 0.35,
+    browRaise: 0.05,
+    mouthCurve: 0.55,
     mouthOpen: 0.0,
-    blush: 0.28,
-    earPerk: 0.25,
-    armPose: ArmPose.rest,
-    antennaColor: AppColors.primaryLight,
-    antennaGlow: 0.4,
+    blush: 0.38,
+    ahogePerk: 0.55,
+    armPose: ArmPose.peek,
+    accentColor: AppColors.avatarStarClip,
+    accentGlow: 0.45,
+    headTilt: 0.04,
   ),
   AvatarMood.listening: AvatarExpression(
     eyeOpen: 1.0,
     eyeShape: EyeShape.wide,
     browTilt: 0.0,
     browRaise: 0.5,
-    mouthCurve: 0.6,
-    mouthOpen: 0.15,
-    blush: 0.35,
-    earPerk: 0.95,
+    mouthCurve: 0.55,
+    mouthOpen: 0.24,
+    blush: 0.45,
+    ahogePerk: 1.0,
     armPose: ArmPose.peek,
-    antennaColor: AppColors.tintBlueFg,
-    antennaGlow: 0.6,
+    accentColor: AppColors.tintBlueFg,
+    accentGlow: 0.72,
+    headTilt: 0.08,
   ),
   AvatarMood.thinking: AvatarExpression(
-    eyeOpen: 0.8,
+    eyeOpen: 0.85,
     eyeShape: EyeShape.normal,
     browTilt: 0.4,
     browRaise: 0.1,
-    mouthCurve: 0.0,
-    mouthOpen: 0.0,
-    blush: 0.18,
-    earPerk: 0.35,
+    mouthCurve: -0.05,
+    mouthOpen: 0.05,
+    blush: 0.24,
+    ahogePerk: 0.45,
     armPose: ArmPose.chin,
-    antennaColor: AppColors.tintBlueFg,
-    antennaGlow: 0.72,
+    accentColor: AppColors.tintBlueFg,
+    accentGlow: 0.75,
+    headTilt: 0.35,
   ),
   AvatarMood.streaming: AvatarExpression(
-    eyeOpen: 0.9,
+    eyeOpen: 0.92,
     eyeShape: EyeShape.normal,
-    browTilt: 0.1,
-    browRaise: 0.15,
-    mouthCurve: 0.45,
-    mouthOpen: 0.32,
-    blush: 0.32,
-    earPerk: 0.55,
+    browTilt: 0.12,
+    browRaise: 0.18,
+    mouthCurve: 0.5,
+    mouthOpen: 0.34,
+    blush: 0.4,
+    ahogePerk: 0.75,
     armPose: ArmPose.type,
-    antennaColor: AppColors.primary,
-    antennaGlow: 0.85,
+    accentColor: AppColors.primary,
+    accentGlow: 0.9,
+    headTilt: 0.0,
   ),
   AvatarMood.success: AvatarExpression(
     eyeOpen: 1.0,
     eyeShape: EyeShape.happy,
     browTilt: 0.0,
-    browRaise: 0.6,
+    browRaise: 0.65,
     mouthCurve: 1.0,
-    mouthOpen: 0.4,
-    blush: 0.72,
-    earPerk: 1.0,
+    mouthOpen: 0.58,
+    blush: 0.78,
+    ahogePerk: 1.0,
     armPose: ArmPose.cheer,
-    antennaColor: AppColors.tintGreenFg,
-    antennaGlow: 1.0,
+    accentColor: AppColors.tintGreenFg,
+    accentGlow: 1.0,
+    headTilt: -0.08,
   ),
   AvatarMood.error: AvatarExpression(
     eyeOpen: 1.0,
     eyeShape: EyeShape.wide,
-    browTilt: -0.7,
-    browRaise: 0.2,
-    mouthCurve: -0.5,
-    mouthOpen: 0.2,
-    blush: 0.15,
-    earPerk: 0.05,
+    browTilt: -0.75,
+    browRaise: 0.25,
+    mouthCurve: -0.55,
+    mouthOpen: 0.16,
+    blush: 0.22,
+    ahogePerk: 0.6,
     armPose: ArmPose.worry,
-    antennaColor: AppColors.tintAmberFg,
-    antennaGlow: 0.75,
+    accentColor: AppColors.tintAmberFg,
+    accentGlow: 0.8,
+    headTilt: -0.14,
   ),
   AvatarMood.offline: AvatarExpression(
-    eyeOpen: 0.25,
+    eyeOpen: 0.18,
     eyeShape: EyeShape.normal,
     browTilt: -0.3,
     browRaise: -0.25,
-    mouthCurve: -0.1,
+    mouthCurve: -0.15,
     mouthOpen: 0.0,
-    blush: 0.08,
-    earPerk: 0.0,
+    blush: 0.14,
+    ahogePerk: 0.0,
     armPose: ArmPose.rest,
-    antennaColor: AppColors.textMuted,
-    antennaGlow: 0.0,
+    accentColor: AppColors.textMuted,
+    accentGlow: 0.0,
+    headTilt: -0.18,
   ),
   AvatarMood.connecting: AvatarExpression(
-    eyeOpen: 0.9,
+    eyeOpen: 0.92,
     eyeShape: EyeShape.normal,
     browTilt: 0.0,
     browRaise: 0.3,
     mouthCurve: 0.05,
-    mouthOpen: 0.3,
-    blush: 0.2,
-    earPerk: 0.5,
+    mouthOpen: 0.32,
+    blush: 0.28,
+    ahogePerk: 0.6,
     armPose: ArmPose.rest,
-    antennaColor: AppColors.tintAmberFg,
-    antennaGlow: 0.65,
+    accentColor: AppColors.tintAmberFg,
+    accentGlow: 0.7,
+    headTilt: 0.05,
   ),
   AvatarMood.sleepy: AvatarExpression(
     eyeOpen: 0.2,
     eyeShape: EyeShape.normal,
-    browTilt: -0.2,
-    browRaise: -0.3,
+    browTilt: -0.22,
+    browRaise: -0.32,
     mouthCurve: 0.05,
     mouthOpen: 0.0,
-    blush: 0.22,
-    earPerk: 0.0,
+    blush: 0.3,
+    ahogePerk: 0.05,
     armPose: ArmPose.rest,
-    antennaColor: AppColors.primaryLight,
-    antennaGlow: 0.15,
+    accentColor: AppColors.avatarStarClip,
+    accentGlow: 0.15,
+    headTilt: 0.22,
   ),
 };
 
@@ -294,32 +314,36 @@ AvatarExpression expressionForReaction(
       browRaise: 0.25,
       mouthCurve: 0.65,
       mouthOpen: 0.15,
-      blush: 0.82,
-      earPerk: 0.85,
-      antennaGlow: 0.85,
+      blush: 0.92,
+      ahogePerk: 1.0,
+      accentGlow: 0.9,
+      headTilt: -0.1,
     ),
+    // Reference signature pose: wink + hand supporting cheek!
     AvatarReaction.wink => base.copyWith(
       eyeShape: EyeShape.normal,
       eyeOpen: 1.0,
       winkRight: true,
       browRaise: 0.35,
-      mouthCurve: 0.85,
-      mouthOpen: 0.1,
+      mouthCurve: 0.9,
+      mouthOpen: 0.44,
       blush: 0.72,
-      earPerk: 0.8,
-      armPose: ArmPose.wave,
-      antennaGlow: 0.8,
+      ahogePerk: 0.85,
+      armPose: ArmPose.chin,
+      headTilt: 0.34,
+      accentGlow: 0.88,
     ),
     AvatarReaction.giggle => base.copyWith(
       eyeShape: EyeShape.happy,
       eyeOpen: 1.0,
       browRaise: 0.55,
       mouthCurve: 1.0,
-      mouthOpen: 0.55,
+      mouthOpen: 0.48,
       blush: 0.9,
-      earPerk: 0.95,
-      armPose: ArmPose.cheer,
-      antennaGlow: 0.95,
+      ahogePerk: 0.95,
+      armPose: ArmPose.coverMouth,
+      headTilt: 0.16,
+      accentGlow: 0.95,
     ),
     AvatarReaction.pet => base.copyWith(
       eyeShape: EyeShape.happy,
@@ -327,33 +351,35 @@ AvatarExpression expressionForReaction(
       browTilt: -0.1,
       browRaise: 0.35,
       mouthCurve: 0.95,
-      mouthOpen: 0.2,
+      mouthOpen: 0.14,
       blush: 1.0,
-      earPerk: 0.7,
-      armPose: ArmPose.rest,
-      antennaColor: AppColors.avatarBlush,
-      antennaGlow: 0.9,
+      ahogePerk: 0.8,
+      armPose: ArmPose.peek,
+      accentColor: AppColors.avatarBlush,
+      accentGlow: 0.92,
+      headTilt: 0.18,
     ),
     AvatarReaction.wave => base.copyWith(
       eyeShape: EyeShape.happy,
       eyeOpen: 1.0,
       browRaise: 0.45,
       mouthCurve: 0.85,
-      mouthOpen: 0.22,
-      blush: 0.55,
-      earPerk: 0.85,
+      mouthOpen: 0.36,
+      blush: 0.58,
+      ahogePerk: 0.85,
       armPose: ArmPose.wave,
-      antennaGlow: 0.75,
+      headTilt: -0.1,
+      accentGlow: 0.82,
     ),
     AvatarReaction.nod => base.copyWith(
       eyeShape: EyeShape.happy,
       eyeOpen: 0.95,
       browRaise: 0.25,
-      mouthCurve: 0.7,
+      mouthCurve: 0.72,
       mouthOpen: 0.0,
-      blush: 0.45,
-      earPerk: 0.6,
-      antennaGlow: 0.65,
+      blush: 0.48,
+      ahogePerk: 0.65,
+      accentGlow: 0.7,
     ),
     AvatarReaction.success => kMoodExpressions[AvatarMood.success]!,
     AvatarReaction.errorShake => kMoodExpressions[AvatarMood.error]!,
@@ -361,13 +387,14 @@ AvatarExpression expressionForReaction(
       eyeShape: EyeShape.wide,
       eyeOpen: 1.0,
       browTilt: -0.2,
-      browRaise: 0.85,
+      browRaise: 0.9,
       mouthCurve: 0.0,
       mouthOpen: 0.55,
-      blush: 0.4,
-      earPerk: 1.0,
-      antennaColor: AppColors.tintBlueFg,
-      antennaGlow: 0.9,
+      blush: 0.42,
+      ahogePerk: 1.0,
+      accentColor: AppColors.tintBlueFg,
+      accentGlow: 0.95,
+      headTilt: 0.0,
     ),
   };
 }

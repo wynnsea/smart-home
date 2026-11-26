@@ -1,12 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'avatar_renderer.dart';
-import 'procedural_avatar_renderer.dart';
+import 'chibi_procedural_renderer.dart';
 
 /// Optional Rive 2.5D/clay renderer slot (recommended for lightweight rigged clay art).
 ///
 /// Because the `rive` package is intentionally not added in Phases 1–6, this slot
-/// always delegates safely to [fallback] ([ProceduralAvatarRenderer]) without crashing.
+/// always delegates safely to [fallback] ([ChibiProceduralRenderer]) without crashing.
 ///
 /// ### How to connect Rive later:
 /// 1. Add `rive` to `pubspec.yaml` and bundle your `.riv` file under `assets/avatar/wynn.riv`.
@@ -22,7 +22,7 @@ import 'procedural_avatar_renderer.dart';
 class RiveAvatarSlot implements AvatarRenderer {
   const RiveAvatarSlot({
     required this.assetPath,
-    this.fallback = const ProceduralAvatarRenderer(),
+    this.fallback = const ChibiProceduralRenderer(),
   });
 
   final String assetPath;

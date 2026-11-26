@@ -81,11 +81,18 @@ abstract final class AppColors {
     colors: [Color(0xFF7447FF), Color(0xFFB596FF)],
   );
 
-  // AI avatar
+  // AI avatar (Wynn v2 chibi clay palette)
   static const Color avatarHoodLight = Color(0xFFCDB9FF);
   static const Color avatarHood = Color(0xFF9F7BFF);
   static const Color avatarHoodDark = Color(0xFF7A55E8);
-  static const Color avatarFace = Color(0xFFFFF4EA);
+  static const Color avatarSkin = Color(0xFFFFE3D3);
+  static const Color avatarSkinShade = Color(0xFFF5C2AE);
+  static const Color avatarHair = Color(0xFF6B4532);
+  static const Color avatarHairShade = Color(0xFF4A2E22);
+  static const Color avatarHairHighlight = Color(0xFF9A6A4E);
+  static const Color avatarIris = Color(0xFF5A3A2E);
+  static const Color avatarIrisLight = Color(0xFFA9765A);
+  static const Color avatarStarClip = Color(0xFFFFD66B);
   static const Color avatarBlush = Color(0xFFFFB4C8);
   static const Color avatarInk = Color(0xFF2B2340);
   static const Color avatarMouth = Color(0xFF8C3B5A);

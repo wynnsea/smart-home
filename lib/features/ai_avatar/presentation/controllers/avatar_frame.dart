@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/avatar_mood.dart';
 
 enum AvatarParticleKind {
@@ -8,6 +9,7 @@ enum AvatarParticleKind {
   sweat,
   sleepZ,
   thinkingDot,
+  exclamation,
 }
 
 /// Active visual effect particle rendered in [AvatarEffectsPainter].
@@ -69,17 +71,18 @@ class AvatarParticle {
 /// Target normalized hand centers `(leftHand, rightHand)` for each [ArmPose].
 (Offset left, Offset right) handTargetsForPose(ArmPose pose) {
   return switch (pose) {
-    ArmPose.rest => (const Offset(0.15, 0.72), const Offset(0.85, 0.72)),
-    ArmPose.peek => (const Offset(0.25, 0.90), const Offset(0.75, 0.90)),
-    ArmPose.chin => (const Offset(0.17, 0.74), const Offset(0.62, 0.75)),
-    ArmPose.wave => (const Offset(0.16, 0.73), const Offset(0.85, 0.34)),
-    ArmPose.cheer => (const Offset(0.14, 0.31), const Offset(0.86, 0.31)),
-    ArmPose.type => (const Offset(0.31, 0.80), const Offset(0.69, 0.80)),
-    ArmPose.worry => (const Offset(0.24, 0.65), const Offset(0.76, 0.65)),
+    ArmPose.rest => (const Offset(0.24, 0.84), const Offset(0.76, 0.84)),
+    ArmPose.peek => (const Offset(0.42, 0.90), const Offset(0.68, 0.88)),
+    ArmPose.chin => (const Offset(0.42, 0.90), const Offset(0.66, 0.59)),
+    ArmPose.wave => (const Offset(0.26, 0.84), const Offset(0.84, 0.44)),
+    ArmPose.cheer => (const Offset(0.16, 0.42), const Offset(0.84, 0.42)),
+    ArmPose.type => (const Offset(0.35, 0.86), const Offset(0.65, 0.86)),
+    ArmPose.worry => (const Offset(0.33, 0.65), const Offset(0.67, 0.65)),
+    ArmPose.coverMouth => (const Offset(0.44, 0.64), const Offset(0.56, 0.64)),
   };
 }
 
-/// Per-frame kinematic values passed to [AvatarBodyPainter].
+/// Per-frame kinematic values passed to [ChibiBodyPainter] & [SpriteAvatarPainter].
 @immutable
 class AvatarFrame {
   const AvatarFrame({
@@ -91,60 +94,61 @@ class AvatarFrame {
     this.pupilOffset = Offset.zero,
     this.squashX = 1.0,
     this.squashY = 1.0,
-    this.antennaOffset = Offset.zero,
-    this.antennaPulse = 1.0,
+    this.hairSwayOffset = Offset.zero,
+    this.accentPulse = 1.0,
     this.blinkAmount = 0.0,
     this.mouthTalkBoost = 0.0,
-    this.leftHandPos = const Offset(0.15, 0.72),
-    this.rightHandPos = const Offset(0.85, 0.72),
+    this.talkShape = 0.0,
+    this.isYawning = false,
+    this.isQuestionAhoge = false,
+    this.leftHandPos = const Offset(0.42, 0.90),
+    this.rightHandPos = const Offset(0.68, 0.88),
     this.bodyScale = 1.0,
   });
 
-  factory AvatarFrame.staticForPose(ArmPose armPose) {
+  factory AvatarFrame.staticForPose(
+    ArmPose armPose, {
+    double headTilt = 0.0,
+    bool isQuestionAhoge = false,
+  }) {
     final (left, right) = handTargetsForPose(armPose);
     return AvatarFrame(
+      headTiltZ: headTilt * 0.24,
+      isQuestionAhoge: isQuestionAhoge,
       leftHandPos: left,
       rightHandPos: right,
     );
   }
 
   final double breatheScaleY;
-
-  /// Normalized vertical float offset (-0.05..+0.05 of size).
   final double floatY;
-
-  /// 2D head tilt around Z axis (radians).
   final double headTiltZ;
-
-  /// Normalized horizontal shake offset (-0.04..+0.04 of size).
   final double shakeX;
-
-  /// 3D drag tilt (-0.35..+0.35 rad) for Matrix4 perspective transform.
   final Offset tilt;
-
-  /// Normalized pupil shift (-0.035..+0.035 of size).
   final Offset pupilOffset;
-
   final double squashX;
   final double squashY;
 
-  /// Spring-lagged antenna tip offset (normalized -0.10..+0.10 of size).
-  final Offset antennaOffset;
+  /// Spring-lagged secondary motion vector shared by back hair (1.0),
+  /// side strands (0.8), bun (0.7), bangs (0.6), and ahoge (1.4).
+  final Offset hairSwayOffset;
 
-  /// Multiplier for antenna orb glow pulse (0.6..1.3).
-  final double antennaPulse;
+  /// Multiplier for star clip glow pulse (0.5..1.3).
+  final double accentPulse;
 
-  /// 0.0 = eyes open, 1.0 = eyes fully closed by blink.
   final double blinkAmount;
-
-  /// Extra mouth opening during streaming speech / yawn (0..0.8).
   final double mouthTalkBoost;
 
-  /// Current interpolated normalized hand coordinates.
+  /// 0..1 alternating vowel blend during streaming speech (0 = "a", 1 = "i").
+  final double talkShape;
+
+  final bool isYawning;
+
+  /// True in error mood so ahoge curls playfully into a "?" shape.
+  final bool isQuestionAhoge;
+
   final Offset leftHandPos;
   final Offset rightHandPos;
-
-  /// Subtle forward lean scale (e.g. 1.04 when listening).
   final double bodyScale;
 
   @override
@@ -159,10 +163,13 @@ class AvatarFrame {
         other.pupilOffset == pupilOffset &&
         other.squashX == squashX &&
         other.squashY == squashY &&
-        other.antennaOffset == antennaOffset &&
-        other.antennaPulse == antennaPulse &&
+        other.hairSwayOffset == hairSwayOffset &&
+        other.accentPulse == accentPulse &&
         other.blinkAmount == blinkAmount &&
         other.mouthTalkBoost == mouthTalkBoost &&
+        other.talkShape == talkShape &&
+        other.isYawning == isYawning &&
+        other.isQuestionAhoge == isQuestionAhoge &&
         other.leftHandPos == leftHandPos &&
         other.rightHandPos == rightHandPos &&
         other.bodyScale == bodyScale;
@@ -178,12 +185,76 @@ class AvatarFrame {
     pupilOffset,
     squashX,
     squashY,
-    antennaOffset,
-    antennaPulse,
+    hairSwayOffset,
+    accentPulse,
     blinkAmount,
     mouthTalkBoost,
+    talkShape,
+    isYawning,
+    isQuestionAhoge,
     leftHandPos,
     rightHandPos,
     bodyScale,
   );
+}
+
+/// Generates subtle static mood indicator particles for Reduce Motion or static preview.
+List<AvatarParticle> staticParticlesForMood(AvatarMood mood) {
+  return switch (mood) {
+    AvatarMood.success => const [
+      AvatarParticle(
+        kind: AvatarParticleKind.sparkle,
+        position: Offset(0.14, 0.22),
+        velocity: Offset.zero,
+        age: 0.3,
+        lifetime: 1.0,
+        scale: 1.0,
+        color: AppColors.tintGreenFg,
+      ),
+      AvatarParticle(
+        kind: AvatarParticleKind.sparkle,
+        position: Offset(0.86, 0.18),
+        velocity: Offset.zero,
+        age: 0.3,
+        lifetime: 1.0,
+        scale: 0.85,
+        color: AppColors.primary,
+      ),
+    ],
+    AvatarMood.error => const [
+      AvatarParticle(
+        kind: AvatarParticleKind.sweat,
+        position: Offset(0.80, 0.34),
+        velocity: Offset.zero,
+        age: 0.3,
+        lifetime: 1.0,
+        scale: 1.0,
+        color: AppColors.tintBlueFg,
+      ),
+    ],
+    AvatarMood.thinking => const [
+      AvatarParticle(
+        kind: AvatarParticleKind.thinkingDot,
+        position: Offset(0.88, 0.24),
+        velocity: Offset.zero,
+        age: 0.3,
+        lifetime: 1.0,
+        scale: 1.0,
+        color: AppColors.tintBlueFg,
+      ),
+    ],
+    AvatarMood.offline || AvatarMood.sleepy => const [
+      AvatarParticle(
+        kind: AvatarParticleKind.sleepZ,
+        position: Offset(0.84, 0.24),
+        velocity: Offset.zero,
+        age: 0.3,
+        lifetime: 1.0,
+        scale: 0.95,
+        color: AppColors.textSecondary,
+        label: 'zZ',
+      ),
+    ],
+    _ => const [],
+  };
 }

@@ -151,7 +151,7 @@ class AgentHubPage extends ConsumerWidget {
                 delay: const Duration(milliseconds: 340),
                 offset: const Offset(0, 24),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 14),
+                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 14),
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -160,11 +160,12 @@ class AgentHubPage extends ConsumerWidget {
                         onSubmitted: submitAndOpenChat,
                       ),
                       const Positioned(
-                        top: -36,
-                        right: 16,
+                        top: -49,
+                        right: 22,
                         child: IgnorePointer(
                           child: WynnAiAvatar(
                             size: AvatarSize.sm,
+                            customSize: 56,
                             pose: AvatarPoseMode.peek,
                             interactive: false,
                           ),

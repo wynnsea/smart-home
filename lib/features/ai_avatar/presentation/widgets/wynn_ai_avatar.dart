@@ -10,12 +10,15 @@ import '../../domain/avatar_expression.dart';
 import '../../domain/avatar_mood.dart';
 import '../controllers/avatar_frame.dart';
 import '../controllers/avatar_motion_controller.dart';
-import '../painters/avatar_body_painter.dart';
 import '../painters/avatar_effects_painter.dart';
+import '../painters/chibi_body_painter.dart';
+import '../painters/sprite_avatar_painter.dart';
 import '../providers/avatar_controller.dart';
 import '../providers/avatar_mood_provider.dart';
+import '../providers/avatar_renderer_provider.dart';
 import '../renderers/avatar_renderer.dart';
-import '../renderers/procedural_avatar_renderer.dart';
+import '../renderers/chibi_procedural_renderer.dart';
+import '../renderers/layered_sprite_renderer.dart';
 import 'avatar_speech_bubble.dart';
 
 /// Main interactive AI mascot widget ("Wynn").
@@ -39,7 +42,7 @@ class WynnAiAvatar extends ConsumerStatefulWidget {
     this.onTap,
     this.onLongPress,
     this.semanticLabel,
-    this.renderer = const ProceduralAvatarRenderer(),
+    this.renderer,
     this.debugReaction,
     this.debugReactionSeq = 0,
   });
@@ -61,7 +64,7 @@ class WynnAiAvatar extends ConsumerStatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final String? semanticLabel;
-  final AvatarRenderer renderer;
+  final AvatarRenderer? renderer;
 
   /// Optional reaction trigger for debug gallery preview.
   final AvatarReaction? debugReaction;
@@ -74,7 +77,7 @@ class WynnAiAvatar extends ConsumerStatefulWidget {
 class _WynnAiAvatarState extends ConsumerState<WynnAiAvatar>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AvatarMotionController _motionController;
-  late AvatarBodyPainter _bodyPainter;
+  late ChibiBodyPainter _bodyPainter;
   late AvatarEffectsPainter _effectsPainter;
   final math.Random _tipRandom = math.Random();
   final LayerLink _layerLink = LayerLink();
@@ -133,7 +136,7 @@ class _WynnAiAvatarState extends ConsumerState<WynnAiAvatar>
   }
 
   void _rebuildPainters() {
-    _bodyPainter = AvatarBodyPainter(
+    _bodyPainter = ChibiBodyPainter(
       motionController: _motionController,
       avatarSize: widget.size,
       poseMode: widget.pose,
@@ -422,7 +425,12 @@ class _WynnAiAvatarState extends ConsumerState<WynnAiAvatar>
         widget.interactive &&
         (widget.size == AvatarSize.md || widget.size == AvatarSize.lg);
 
-    final renderedAvatar = widget.renderer.build(
+    final effectiveRenderer =
+        widget.renderer ??
+        ref.watch(avatarRendererProvider).asData?.value ??
+        const ChibiProceduralRenderer();
+
+    final renderedAvatar = effectiveRenderer.build(
       context,
       AvatarRenderInput(
         mood: effectiveMood,
@@ -460,22 +468,34 @@ class _WynnAiAvatarState extends ConsumerState<WynnAiAvatar>
 
     if (widget.heroTag != null) {
       final staticExpr = _motionController.expression;
-      final staticFrame = AvatarFrame.staticForPose(staticExpr.armPose);
+      final staticFrame = AvatarFrame.staticForPose(
+        staticExpr.armPose,
+        headTilt: staticExpr.headTilt,
+        isQuestionAhoge: effectiveMood == AvatarMood.error,
+      );
+      final CustomPainter shuttlePainter =
+          (effectiveRenderer is LayeredSpriteRenderer &&
+              effectiveRenderer.isReady)
+          ? SpriteAvatarPainter(
+              manifest: effectiveRenderer.manifest,
+              images: effectiveRenderer.images,
+              staticExpression: staticExpr,
+              staticFrame: staticFrame,
+              avatarSize: AvatarSize.lg,
+              poseMode: widget.pose,
+            )
+          : ChibiBodyPainter(
+              staticExpression: staticExpr,
+              staticFrame: staticFrame,
+              avatarSize: AvatarSize.lg,
+              poseMode: widget.pose,
+            );
       avatarVisual = Hero(
         tag: widget.heroTag!,
         flightShuttleBuilder: (context, animation, direction, from, to) {
           return RepaintBoundary(
-            child: SizedBox(
-              width: side,
-              height: side,
-              child: CustomPaint(
-                painter: AvatarBodyPainter(
-                  staticExpression: staticExpr,
-                  staticFrame: staticFrame,
-                  avatarSize: widget.size,
-                  poseMode: widget.pose,
-                ),
-              ),
+            child: SizedBox.expand(
+              child: CustomPaint(painter: shuttlePainter),
             ),
           );
         },
