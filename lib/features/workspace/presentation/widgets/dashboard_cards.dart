@@ -429,10 +429,10 @@ class _CircularRingGauge extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: AppColors.adaptiveTextPrimary(context),
               ),
             ),
           ),
@@ -560,10 +560,10 @@ class SessionContinueCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_rounded,
                         size: 17,
-                        color: AppColors.textPrimary,
+                        color: AppColors.adaptiveTextPrimary(context),
                       ),
                     ],
                   ),
@@ -609,10 +609,10 @@ class SessionContinueCard extends StatelessWidget {
                           const SizedBox(width: 10),
                           Text(
                             '${(val * 100).round()}%',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: AppColors.adaptiveTextPrimary(context),
                             ),
                           ),
                         ],
@@ -648,53 +648,7 @@ class FloatingBottomNav extends StatefulWidget {
   State<FloatingBottomNav> createState() => _FloatingBottomNavState();
 }
 
-class _FloatingBottomNavState extends State<FloatingBottomNav>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final AnimationController _fabGlowController;
-  bool _appPaused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _fabGlowController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    );
-  }
-
-  void _syncFabAnimation() {
-    if (!mounted) return;
-    final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    if (disableAnimations || _appPaused) {
-      _fabGlowController.stop();
-    } else if (!_fabGlowController.isAnimating) {
-      _fabGlowController.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _syncFabAnimation();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _appPaused =
-        state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.hidden;
-    _syncFabAnimation();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _fabGlowController.dispose();
-    super.dispose();
-  }
-
+class _FloatingBottomNavState extends State<FloatingBottomNav> {
   @override
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
@@ -740,20 +694,33 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.92),
-                                  AppColors.primarySoft.withValues(alpha: 0.65),
-                                  Colors.white.withValues(alpha: 0.78),
-                                ],
+                                colors: AppColors.isDark(context)
+                                    ? [
+                                        const Color(0xFF3D346E)
+                                            .withValues(alpha: 0.92),
+                                        const Color(0xFF28264E)
+                                            .withValues(alpha: 0.88),
+                                      ]
+                                    : [
+                                        Colors.white.withValues(alpha: 0.92),
+                                        AppColors.primarySoft
+                                            .withValues(alpha: 0.65),
+                                        Colors.white.withValues(alpha: 0.78),
+                                      ],
                               ),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.95),
+                                color: AppColors.isDark(context)
+                                    ? AppColors.primaryLight
+                                        .withValues(alpha: 0.55)
+                                    : Colors.white.withValues(alpha: 0.95),
                                 width: 1.2,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: AppColors.primary.withValues(
-                                    alpha: 0.16,
+                                    alpha: AppColors.isDark(context)
+                                        ? 0.34
+                                        : 0.16,
                                   ),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
@@ -801,8 +768,12 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                                               icon,
                                               size: 22,
                                               color: selected
-                                                  ? AppColors.primary
-                                                  : AppColors.textSecondary,
+                                                  ? (AppColors.isDark(context)
+                                                        ? AppColors.primaryLight
+                                                        : AppColors.primary)
+                                                  : AppColors.adaptiveTextSecondary(
+                                                      context,
+                                                    ),
                                             ),
                                             if (hasDiffBadge)
                                               Positioned(
@@ -860,71 +831,61 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
               semanticLabel: 'Buka Chat AI',
               onTap: widget.onSparkleFabTap,
               child: RepaintBoundary(
-                child: AnimatedBuilder(
-                  animation: _fabGlowController,
-                  builder: (context, child) {
-                    final glow = _fabGlowController.value;
-                    return Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xE8B392FF),
-                            Color(0xE87A4EFF),
-                            Color(0xE86338EB),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          width: 1.6,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(
-                              alpha: 0.34 + glow * 0.22,
-                            ),
-                            blurRadius: 18 + glow * 10,
-                            spreadRadius: glow * 1.5,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xE8B392FF),
+                        Color(0xE87A4EFF),
+                        Color(0xE86338EB),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      width: 1.6,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.42),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Glossy top-left Liquid Glass specular crescent
-                          Positioned(
-                            top: 5,
-                            left: 11,
-                            right: 17,
-                            height: 16,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(99),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.52),
-                                    Colors.white.withValues(alpha: 0.0),
-                                  ],
-                                ),
-                              ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Glossy top-left Liquid Glass specular crescent
+                      Positioned(
+                        top: 5,
+                        left: 11,
+                        right: 17,
+                        height: 16,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(99),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.52),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
                             ),
                           ),
-                          child!,
-                        ],
+                        ),
                       ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 27,
+                      const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.white,
+                        size: 27,
+                      ),
+                    ],
                   ),
                 ),
               ),

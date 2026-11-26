@@ -89,7 +89,7 @@ class _LogsPageState extends ConsumerState<LogsPage> {
               ChoiceChip(
                 label: Text('Semua (${allLogs.length})'),
                 selected: _filter == _LogFilter.all,
-                selectedColor: AppColors.primarySoft,
+                selectedColor: AppColors.adaptiveChipSelectedBg(context),
                 onSelected: (_) => setState(() => _filter = _LogFilter.all),
               ),
               ChoiceChip(
@@ -180,7 +180,9 @@ class _LogsPageState extends ConsumerState<LogsPage> {
                                     style: AppTheme.monoStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.adaptiveTextPrimary(
+                                        context,
+                                      ),
                                     ),
                                   ),
                                 ),

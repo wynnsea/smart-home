@@ -160,10 +160,7 @@ class GitCommitItem {
 
 @immutable
 class GitBranchesResult {
-  const GitBranchesResult({
-    required this.active,
-    required this.branches,
-  });
+  const GitBranchesResult({required this.active, required this.branches});
 
   final String active;
   final List<String> branches;
@@ -633,13 +630,18 @@ class WynnBridgeClient {
           )
           .toList();
 
+      final personalMemory = AppLocalStorage.loadPersonaMemory().trim();
+      final composedSystemPrompt = personalMemory.isEmpty
+          ? '${agent.systemPrompt}\n$kWynnNaturalVoiceGuide'
+          : '${agent.systemPrompt}\n$kWynnNaturalVoiceGuide\nMemori tentang user: $personalMemory';
+
       req.add(
         utf8.encode(
           jsonEncode({
             'prompt': prompt,
             'mode': mode.name,
             'model': modelId,
-            'systemPrompt': agent.systemPrompt,
+            'systemPrompt': composedSystemPrompt,
             'attachedFiles': attachedFiles,
             'history': historyPayload,
           }),

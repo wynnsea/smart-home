@@ -34,6 +34,7 @@ abstract final class AppLocalStorage {
   static const String _kChatSnapshotKey = 'wynndiff_chat_snapshot_v1';
   static const String _kTokenUsageKey = 'wynndiff_token_usage_v1';
   static const String _kDarkModeKey = 'wynndiff_dark_mode_v1';
+  static const String _kPersonaMemoryKey = 'wynndiff_persona_memory_v1';
 
   static SharedPreferences? _prefs;
 
@@ -336,5 +337,17 @@ abstract final class AppLocalStorage {
     final prefs = _prefs;
     if (prefs == null) return;
     await prefs.setBool(_kDarkModeKey, isDark);
+  }
+
+  static String loadPersonaMemory() {
+    final saved = _prefs?.getString(_kPersonaMemoryKey);
+    if (saved == null) return kDefaultPersonalMemory;
+    return saved;
+  }
+
+  static Future<void> savePersonaMemory(String memory) async {
+    final prefs = _prefs;
+    if (prefs == null) return;
+    await prefs.setString(_kPersonaMemoryKey, memory.trim());
   }
 }

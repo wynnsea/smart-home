@@ -82,7 +82,11 @@ void main() {
       await tester.tap(find.byIcon(Icons.dns_outlined));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
-      await tester.drag(find.byType(ListView).first, const Offset(0, -600));
+      await tester.scrollUntilVisible(
+        find.text('Terminal Logs'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.text('Terminal Logs'));
       await tester.pump();

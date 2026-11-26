@@ -88,6 +88,29 @@ abstract final class AppColors {
   static const Color avatarSweaterStripe = Color(0xFF343C66);
   static const Color avatarGlasses = Color(0xFF17181E);
   static const Color avatarSkin = Color(0xFFFAD3BC);
+
+  // Adaptive helpers for Light Pastel vs Midnight Glass Dark Mode
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color adaptiveTextPrimary(BuildContext context) =>
+      isDark(context) ? const Color(0xFFF2F3FF) : textPrimary;
+
+  static Color adaptiveTextSecondary(BuildContext context) =>
+      isDark(context) ? const Color(0xFFA8B0D3) : textSecondary;
+
+  static Color adaptiveInputFill(BuildContext context) => isDark(context)
+      ? const Color(0xFF14182D)
+      : Colors.white.withValues(alpha: 0.78);
+
+  static Color adaptiveChipBg(BuildContext context) =>
+      isDark(context) ? const Color(0xFF232846) : surfaceSubtle;
+
+  static Color adaptiveChipSelectedBg(BuildContext context) =>
+      isDark(context) ? const Color(0xFF3D3070) : primarySoft;
+
+  static Color adaptiveBorder(BuildContext context) =>
+      isDark(context) ? const Color(0xFF353C63) : borderDivider;
   static const Color avatarSkinShade = Color(0xFFE3A38B);
   static const Color avatarHair = Color(0xFF1C1D25);
   static const Color avatarHairShade = Color(0xFF0E0F14);

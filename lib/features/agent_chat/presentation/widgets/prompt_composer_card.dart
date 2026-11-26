@@ -95,24 +95,32 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+      child: RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.64),
-                  AppColors.primarySoft.withValues(alpha: 0.42),
-                  Colors.white.withValues(alpha: 0.56),
-                ],
+                colors: AppColors.isDark(context)
+                    ? [
+                        const Color(0xFF232846).withValues(alpha: 0.82),
+                        const Color(0xFF1A1F38).withValues(alpha: 0.78),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.64),
+                        AppColors.primarySoft.withValues(alpha: 0.42),
+                        Colors.white.withValues(alpha: 0.56),
+                      ],
               ),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.90),
+                color: AppColors.isDark(context)
+                    ? Colors.white.withValues(alpha: 0.16)
+                    : Colors.white.withValues(alpha: 0.90),
                 width: 1.4,
               ),
             ),
@@ -137,10 +145,12 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
                                   '${chatState.selectedModel} · ${chatState.mode.label}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.adaptiveTextPrimary(
+                                      context,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -181,14 +191,21 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.86),
-                          Colors.white.withValues(alpha: 0.68),
-                        ],
+                        colors: AppColors.isDark(context)
+                            ? [
+                                const Color(0xFF171B31).withValues(alpha: 0.94),
+                                const Color(0xFF13172B).withValues(alpha: 0.90),
+                              ]
+                            : [
+                                Colors.white.withValues(alpha: 0.86),
+                                Colors.white.withValues(alpha: 0.68),
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: AppColors.isDark(context)
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.white.withValues(alpha: 0.95),
                         width: 1.2,
                       ),
                     ),
@@ -239,9 +256,9 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
                           onSubmitted: (_) {
                             if (canSend) _handleSend();
                           },
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textPrimary,
+                            color: AppColors.adaptiveTextPrimary(context),
                           ),
                           decoration: InputDecoration(
                             hintText: isDisconnected
@@ -359,6 +376,7 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );
@@ -721,14 +739,14 @@ class _ComposerIconButton extends StatelessWidget {
               child: Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.surfaceSubtle,
+                  color: AppColors.adaptiveChipBg(context),
                 ),
                 child: Icon(
                   icon,
                   size: 18,
-                  color: AppColors.textPrimary,
+                  color: AppColors.adaptiveTextPrimary(context),
                 ),
               ),
             ),

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../core/storage/app_local_storage.dart';
 import '../../domain/entities/ai_gateway_entities.dart';
 import '../../domain/entities/chat_entities.dart';
 
@@ -108,11 +109,16 @@ Map<String, Object?> buildOpenRouterPayload({
   final contextNote = attachedFiles.isEmpty
       ? ''
       : '\nFile konteks yang dilampirkan pengguna: ${attachedFiles.join(', ')}.';
+  final personalMemory = AppLocalStorage.loadPersonaMemory().trim();
+  final memoryNote = personalMemory.isEmpty
+      ? ''
+      : '\nMemori tentang user: $personalMemory';
 
   final messages = <Map<String, String>>[
     {
       'role': 'system',
-      'content': '${agent.systemPrompt}\n$modeInstruction$contextNote',
+      'content':
+          '${agent.systemPrompt}\n$kWynnNaturalVoiceGuide$memoryNote\n$modeInstruction$contextNote',
     },
   ];
 
@@ -143,6 +149,7 @@ Map<String, Object?> buildOpenRouterPayload({
   return <String, Object?>{
     'model': modelId,
     'stream': true,
+    'temperature': 0.75,
     'max_tokens': 2048,
     'messages': messages,
   };
@@ -303,6 +310,7 @@ class OpenRouterAgentDatasource {
       final lines = response
           .transform(utf8.decoder)
           .transform(const LineSplitter());
+      var lastEmitMs = 0;
 
       await for (final line in lines) {
         final parsed = parseOpenAiSseDataLine(line);
@@ -313,17 +321,21 @@ class OpenRouterAgentDatasource {
 
         if (parsed.contentDelta.isNotEmpty) {
           buffer.write(parsed.contentDelta);
-          yield PromptStreamChunk(
-            partialMessage: ChatMessage(
-              id: msgId,
-              isUser: false,
-              timestampLabel: timeStr,
-              heading: agent.name,
-              statusBadge: '$modelName · ${mode.label} · Live',
-              text: buffer.toString(),
-              isStreaming: true,
-            ),
-          );
+          final nowMs = DateTime.now().millisecondsSinceEpoch;
+          if (nowMs - lastEmitMs >= 36) {
+            lastEmitMs = nowMs;
+            yield PromptStreamChunk(
+              partialMessage: ChatMessage(
+                id: msgId,
+                isUser: false,
+                timestampLabel: timeStr,
+                heading: agent.name,
+                statusBadge: '$modelName · ${mode.label} · Live',
+                text: buffer.toString(),
+                isStreaming: true,
+              ),
+            );
+          }
         }
       }
 

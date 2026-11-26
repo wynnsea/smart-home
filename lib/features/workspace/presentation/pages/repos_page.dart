@@ -251,11 +251,13 @@ class _ReposPageState extends ConsumerState<ReposPage> {
                   hintText: 'Cari nama project...',
                   prefixIcon: const Icon(Icons.search_rounded, size: 19),
                   filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.78),
+                  fillColor: AppColors.adaptiveInputFill(context),
                   isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.borderDivider),
+                    borderSide: BorderSide(
+                      color: AppColors.adaptiveBorder(context),
+                    ),
                   ),
                 ),
               ),

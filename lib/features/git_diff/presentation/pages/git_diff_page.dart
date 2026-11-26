@@ -195,16 +195,17 @@ class _GitDiffPageState extends ConsumerState<GitDiffPage> {
                   avatar: const Icon(
                     Icons.call_split_rounded,
                     size: 15,
-                    color: AppColors.primary,
+                    color: AppColors.primaryLight,
                   ),
                   label: Text(
                     snapshot.branch,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
+                      color: AppColors.adaptiveTextPrimary(context),
                     ),
                   ),
-                  backgroundColor: AppColors.primarySoft,
+                  backgroundColor: AppColors.adaptiveChipSelectedBg(context),
                   onPressed: _openBranchSwitcher,
                 ),
               ],
@@ -216,14 +217,14 @@ class _GitDiffPageState extends ConsumerState<GitDiffPage> {
                 ChoiceChip(
                   label: Text('Perubahan (${snapshot.files.length})'),
                   selected: _subTab == _DiffSubTab.changes,
-                  selectedColor: AppColors.primarySoft,
+                  selectedColor: AppColors.adaptiveChipSelectedBg(context),
                   onSelected: (_) =>
                       setState(() => _subTab = _DiffSubTab.changes),
                 ),
                 ChoiceChip(
                   label: const Text('Riwayat Commit'),
                   selected: _subTab == _DiffSubTab.history,
-                  selectedColor: AppColors.primarySoft,
+                  selectedColor: AppColors.adaptiveChipSelectedBg(context),
                   onSelected: (_) {
                     setState(() => _subTab = _DiffSubTab.history);
                     _loadCommits();

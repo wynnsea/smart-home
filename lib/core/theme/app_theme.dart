@@ -119,6 +119,53 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         foregroundColor: textPrimary,
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: textPrimary,
+          side: const BorderSide(color: Color(0xFF3A4169)),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: const Color(0xFF232846),
+        selectedColor: const Color(0xFF3D3070),
+        disabledColor: const Color(0xFF1B1F38),
+        side: const BorderSide(color: Color(0xFF353C63)),
+        labelStyle: const TextStyle(
+          color: textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          color: textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF14182D),
+        labelStyle: const TextStyle(color: textSecondary, fontSize: 12.5),
+        floatingLabelStyle: const TextStyle(
+          color: primaryAccent,
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+        ),
+        hintStyle: const TextStyle(color: Color(0xFF6E769B)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF353C63)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: primaryAccent, width: 1.4),
+        ),
+      ),
       dividerColor: const Color(0xFF282E4C),
     );
   }
@@ -126,7 +173,7 @@ abstract final class AppTheme {
   static TextStyle monoStyle({
     double fontSize = 12,
     FontWeight fontWeight = FontWeight.w500,
-    Color color = AppColors.textPrimary,
+    Color? color,
     double height = 1.45,
   }) {
     return GoogleFonts.jetBrainsMono(

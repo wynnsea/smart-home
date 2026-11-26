@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -13,6 +12,7 @@ import '../../../agent_chat/domain/entities/token_usage_entities.dart';
 import '../../../agent_chat/presentation/pages/token_usage_page.dart';
 import '../../../agent_chat/presentation/providers/agent_chat_provider.dart';
 import '../../../agent_chat/presentation/providers/ai_gateway_provider.dart';
+import '../../../agent_chat/presentation/providers/persona_memory_provider.dart';
 import '../../../agent_chat/presentation/providers/token_usage_provider.dart';
 import '../../../ai_avatar/presentation/widgets/avatar_debug_page.dart';
 import '../../domain/entities/workspace_entities.dart';
@@ -225,11 +225,11 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                           decoration: InputDecoration(
                             labelText: 'Alamat Host (Tailscale / IP)',
                             filled: true,
-                            fillColor: Colors.white.withValues(alpha: 0.78),
+                            fillColor: AppColors.adaptiveInputFill(context),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.borderDivider,
+                              borderSide: BorderSide(
+                                color: AppColors.adaptiveBorder(context),
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -250,11 +250,11 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                           decoration: InputDecoration(
                             labelText: 'Port',
                             filled: true,
-                            fillColor: Colors.white.withValues(alpha: 0.78),
+                            fillColor: AppColors.adaptiveInputFill(context),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.borderDivider,
+                              borderSide: BorderSide(
+                                color: AppColors.adaptiveBorder(context),
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -277,11 +277,11 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                     decoration: InputDecoration(
                       labelText: 'Bridge Token (samakan dengan .env Server)',
                       filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.78),
+                      fillColor: AppColors.adaptiveInputFill(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: AppColors.borderDivider,
+                        borderSide: BorderSide(
+                          color: AppColors.adaptiveBorder(context),
                         ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -393,6 +393,8 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
           ),
           const SizedBox(height: 14),
           const _AiGatewayCard(),
+          const SizedBox(height: 14),
+          const _PersonaMemoryCard(),
           const SizedBox(height: 14),
           GlassCard(
             blur: false,
@@ -508,21 +510,75 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Terminal Logs',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: AppColors.adaptiveTextPrimary(context),
                         ),
                       ),
                       Text(
                         '${ref.watch(agentChatProvider).logs.length} event eksekusi & tool-call server',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
-                          color: AppColors.textSecondary,
+                          color: AppColors.adaptiveTextSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          GlassCard(
+            blur: false,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            onTap: () => Navigator.of(context).push(
+              EtherealPageRoute<void>(builder: (_) => const AvatarDebugPage()),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.tintPurpleBg,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.face_retouching_natural_rounded,
+                    color: AppColors.tintPurpleFg,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Preview Avatar Wynn',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.adaptiveTextPrimary(context),
+                        ),
+                      ),
+                      Text(
+                        'Galeri 9 mood, slider ekspresi & reaksi Wynn',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.adaptiveTextSecondary(context),
                         ),
                       ),
                     ],
@@ -546,71 +602,48 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                 tilePadding: const EdgeInsets.symmetric(horizontal: 4),
                 childrenPadding: const EdgeInsets.only(bottom: 8),
                 initiallyExpanded: false,
-                title: const Text(
+                title: Text(
                   'Info developer',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: AppColors.adaptiveTextPrimary(context),
                   ),
                 ),
-                subtitle: const Text(
-                  'Daftar endpoint bridge (mock mode)',
+                subtitle: Text(
+                  'Daftar endpoint Server Bridge',
                   style: TextStyle(
                     fontSize: 11.5,
-                    color: AppColors.textSecondary,
+                    color: AppColors.adaptiveTextSecondary(context),
                   ),
                 ),
-                children: [
-                  if (kDebugMode) ...[
-                    ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(
-                        Icons.face_retouching_natural_rounded,
-                        color: AppColors.primary,
-                      ),
-                      title: const Text(
-                        'Preview avatar',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Galeri 9 mood, slider ekspresi & reaksi Wynn',
-                        style: TextStyle(fontSize: 11.2),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => Navigator.of(context).push(
-                        EtherealPageRoute<void>(
-                          builder: (_) => const AvatarDebugPage(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 12),
-                  ],
-                  const _EndpointRow(
+                children: const [
+                  _EndpointRow(
                     method: 'POST',
                     path: '/prompt',
                     desc: 'SSE real-time stream',
                   ),
-                  const _EndpointRow(
+                  _EndpointRow(
                     method: 'GET',
-                    path: '/git/status',
-                    desc: 'Modified files list',
+                    path: '/system/stats',
+                    desc: 'CPU, RAM, Disk & Uptime',
                   ),
-                  const _EndpointRow(
+                  _EndpointRow(
+                    method: 'GET',
+                    path: '/repos',
+                    desc: 'List & switch project server',
+                  ),
+                  _EndpointRow(
                     method: 'GET',
                     path: '/git/diff',
                     desc: 'Unified diff hunks',
                   ),
-                  const _EndpointRow(
+                  _EndpointRow(
                     method: 'POST',
                     path: '/git/commit',
                     desc: 'Approve & push',
                   ),
-                  const _EndpointRow(
+                  _EndpointRow(
                     method: 'POST',
                     path: '/git/reset',
                     desc: 'Discard / rollback',
@@ -762,29 +795,38 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
             runSpacing: 6,
             children: [
               ActionChip(
-                label: const Text(
+                label: Text(
                   'OpenRouter',
-                  style: TextStyle(fontSize: 11.5),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.adaptiveTextPrimary(context),
+                  ),
                 ),
-                backgroundColor: AppColors.primarySoft,
+                backgroundColor: AppColors.adaptiveChipSelectedBg(context),
                 onPressed: () => _applyPreset(kDefaultOpenRouterBaseUrl),
               ),
               ActionChip(
-                label: const Text(
+                label: Text(
                   'Gemini Compat',
-                  style: TextStyle(fontSize: 11.5),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.adaptiveTextPrimary(context),
+                  ),
                 ),
-                backgroundColor: AppColors.surfaceSubtle,
+                backgroundColor: AppColors.adaptiveChipBg(context),
                 onPressed: () => _applyPreset(
                   'https://generativelanguage.googleapis.com/v1beta/openai',
                 ),
               ),
               ActionChip(
-                label: const Text(
+                label: Text(
                   'Server Lokal',
-                  style: TextStyle(fontSize: 11.5),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.adaptiveTextPrimary(context),
+                  ),
                 ),
-                backgroundColor: AppColors.surfaceSubtle,
+                backgroundColor: AppColors.adaptiveChipBg(context),
                 onPressed: () => _applyPreset('http://100.85.100.80:11434/v1'),
               ),
             ],
@@ -799,10 +841,12 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
               labelText: 'Gateway Base URL',
               hintText: kDefaultOpenRouterBaseUrl,
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.78),
+              fillColor: AppColors.adaptiveInputFill(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.borderDivider),
+                borderSide: BorderSide(
+                  color: AppColors.adaptiveBorder(context),
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -820,10 +864,12 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
               labelText: 'API Key (sk-or-v1-...)',
               hintText: 'Kosongkan untuk tetap di Mock Mode',
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.78),
+              fillColor: AppColors.adaptiveInputFill(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.borderDivider),
+                borderSide: BorderSide(
+                  color: AppColors.adaptiveBorder(context),
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -898,6 +944,143 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
   }
 }
 
+class _PersonaMemoryCard extends ConsumerStatefulWidget {
+  const _PersonaMemoryCard();
+
+  @override
+  ConsumerState<_PersonaMemoryCard> createState() => _PersonaMemoryCardState();
+}
+
+class _PersonaMemoryCardState extends ConsumerState<_PersonaMemoryCard> {
+  late final TextEditingController _memoryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _memoryController = TextEditingController(
+      text: ref.read(personaMemoryProvider),
+    );
+  }
+
+  @override
+  void dispose() {
+    _memoryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GlassCard(
+      blur: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.tintPurpleBg,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.tintPurpleFg,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Memori & Gaya Bicara Wynn',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      'Natural, santai ("aku–kamu") & ingat profil kamu',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _memoryController,
+            minLines: 2,
+            maxLines: 4,
+            style: const TextStyle(fontSize: 12.5, height: 1.4),
+            decoration: InputDecoration(
+              labelText: 'Catatan yang diingat Wynn lintas sesi',
+              hintText: 'Contoh: Panggil aku Wayan, suka penjelasan santai...',
+              filled: true,
+              fillColor: isDark
+                  ? const Color(0xFF14182D)
+                  : Colors.white.withValues(alpha: 0.78),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.borderDivider),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 11,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(personaMemoryProvider.notifier)
+                        .updateMemory(_memoryController.text);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Memori personal Wynn tersimpan'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.save_rounded, size: 17),
+                  label: const Text('Simpan Memori'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: () {
+                  ref.read(personaMemoryProvider.notifier).resetToDefault();
+                  _memoryController.text = ref.read(personaMemoryProvider);
+                },
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text('Reset'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HostMetaRow extends StatelessWidget {
   const _HostMetaRow({required this.label, required this.value});
 
@@ -921,10 +1104,10 @@ class _HostMetaRow extends StatelessWidget {
             textAlign: TextAlign.end,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.adaptiveTextPrimary(context),
             ),
           ),
         ),

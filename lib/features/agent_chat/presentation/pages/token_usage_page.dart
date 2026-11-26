@@ -193,7 +193,9 @@ class TokenUsagePage extends ConsumerWidget {
                         return ChoiceChip(
                           label: Text(formatTokenCount(preset)),
                           selected: selected,
-                          selectedColor: AppColors.primarySoft,
+                          selectedColor: AppColors.adaptiveChipSelectedBg(
+                            context,
+                          ),
                           onSelected: (_) => notifier.setDailyBudget(preset),
                         );
                       }).toList(),

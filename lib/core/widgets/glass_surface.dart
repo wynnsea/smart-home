@@ -15,8 +15,8 @@ class GlassCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.borderRadius = 26,
-    this.blurSigma = 22,
-    this.blur = true,
+    this.blurSigma = 12,
+    this.blur = false,
     this.color,
     this.onTap,
     this.borderColor,
@@ -172,7 +172,7 @@ class LiquidGlassPill extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
     this.height,
-    this.blurSigma = 26,
+    this.blurSigma = 12,
   });
 
   final Widget child;
@@ -183,23 +183,28 @@ class LiquidGlassPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : const Color(0xFF5A45B5))
-                .withValues(alpha: isDark ? 0.35 : 0.13),
-            blurRadius: 24,
-            spreadRadius: -2,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(999),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+    final effectiveSigma = blurSigma.clamp(0.0, 12.0);
+    return RepaintBoundary(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : const Color(0xFF5A45B5))
+                  .withValues(alpha: isDark ? 0.35 : 0.13),
+              blurRadius: 18,
+              spreadRadius: -2,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: effectiveSigma,
+              sigmaY: effectiveSigma,
+            ),
           child: CustomPaint(
             foregroundPainter: _LiquidGlassRimPainter(
               borderRadius: 999,
@@ -233,6 +238,7 @@ class LiquidGlassPill extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -248,7 +254,7 @@ class GlassCircleButton extends StatelessWidget {
     this.size = 42,
     this.badgeText,
     this.iconColor,
-    this.blur = true,
+    this.blur = false,
   });
 
   final IconData icon;

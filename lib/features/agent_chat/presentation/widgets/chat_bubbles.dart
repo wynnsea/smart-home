@@ -566,19 +566,24 @@ class _RichAgentText extends StatelessWidget {
             text: token.substring(2, token.length - 2),
             style: baseStyle?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.adaptiveTextPrimary(context),
             ),
           ),
         );
       } else if (token.startsWith('`') && token.endsWith('`')) {
+        final isDark = AppColors.isDark(context);
         spans.add(
           TextSpan(
             text: ' ${token.substring(1, token.length - 1)} ',
             style: AppTheme.monoStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ).copyWith(backgroundColor: AppColors.surfaceSubtle),
+              color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+            ).copyWith(
+              backgroundColor: isDark
+                  ? const Color(0xFF282E4E)
+                  : AppColors.surfaceSubtle,
+            ),
           ),
         );
       }
@@ -600,11 +605,12 @@ class _CodeBlockBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceSubtle,
+        color: isDark ? const Color(0xFF12162A) : AppColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderDivider),
+        border: Border.all(color: AppColors.adaptiveBorder(context)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -612,15 +618,17 @@ class _CodeBlockBox extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-            color: Colors.white.withValues(alpha: 0.65),
+            color: isDark
+                ? const Color(0xFF1D223D)
+                : Colors.white.withValues(alpha: 0.65),
             child: Row(
               children: [
                 Text(
                   language.isEmpty ? 'CODE' : language.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textSecondary,
+                    color: AppColors.adaptiveTextSecondary(context),
                   ),
                 ),
                 const Spacer(),
@@ -652,7 +660,7 @@ class _CodeBlockBox extends StatelessWidget {
               code,
               style: AppTheme.monoStyle(
                 fontSize: 11.8,
-                color: AppColors.textPrimary,
+                color: AppColors.adaptiveTextPrimary(context),
               ),
             ),
           ),
