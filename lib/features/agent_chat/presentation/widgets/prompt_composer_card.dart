@@ -12,8 +12,10 @@ import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../../git_diff/presentation/widgets/git_diff_bottom_sheet.dart';
 import '../../../workspace/domain/entities/workspace_entities.dart';
 import '../../../workspace/presentation/providers/workspace_provider.dart';
+import '../../domain/entities/ai_gateway_entities.dart';
 import '../../domain/entities/chat_entities.dart';
 import '../providers/agent_chat_provider.dart';
+import '../providers/ai_gateway_provider.dart';
 
 /// Signature dual-layer prompt composer matching the reference design:
 /// - Soft lavender top status bar ("Gemini 4 Pro · Agent" | "4 files · Diff")
@@ -524,27 +526,93 @@ Future<void> showModeModelPickerSheet(BuildContext context) {
       return Consumer(
         builder: (context, ref, _) {
           final state = ref.watch(agentChatProvider);
+          final gateway = ref.watch(aiGatewayProvider);
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Agent Mode & Model',
-                style: Theme.of(context).textTheme.titleLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Agent Mode & Model',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: gateway.isConfigured
+                          ? AppColors.tintGreenBg
+                          : AppColors.tintAmberBg,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      gateway.isConfigured ? 'OpenRouter Live' : 'Mock Mode',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: gateway.isConfigured
+                            ? AppColors.tintGreenFg
+                            : AppColors.tintAmberFg,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
+              Text(
+                'Pilih Agent',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: kBuiltInAgents.map((agent) {
+                  final selected = state.selectedAgentId == agent.id;
+                  return ChoiceChip(
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    label: Text(
+                      agent.name,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    selected: selected,
+                    selectedColor: AppColors.primarySoft,
+                    onSelected: (_) =>
+                        ref.read(agentChatProvider.notifier).setAgent(agent),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                state.selectedAgent.tagline,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 11.2,
+                ),
+              ),
+              const SizedBox(height: 10),
               Text(
                 'Execution Mode',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: AgentMode.values.map((mode) {
                   final selected = state.mode == mode;
                   return ChoiceChip(
-                    label: Text('${mode.label} · ${mode.description}'),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    label: Text(
+                      '${mode.label} · ${mode.description}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     selected: selected,
                     selectedColor: AppColors.primarySoft,
                     onSelected: (_) =>
@@ -552,16 +620,19 @@ Future<void> showModeModelPickerSheet(BuildContext context) {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               Text(
-                'Model',
+                'Model (AI Gateway)',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: 6),
-              ...AgentChatNotifier.availableModels.map((model) {
-                final selected = state.selectedModel == model;
+              const SizedBox(height: 4),
+              ...kOpenRouterModels.map((model) {
+                final selected =
+                    state.selectedModel == model.label ||
+                    state.selectedModel == model.id;
                 return ListTile(
                   dense: true,
+                  visualDensity: const VisualDensity(vertical: -3),
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(
                     selected
@@ -569,12 +640,47 @@ Future<void> showModeModelPickerSheet(BuildContext context) {
                         : Icons.radio_button_off_rounded,
                     color: selected ? AppColors.primary : AppColors.textMuted,
                   ),
-                  title: Text(
-                    model,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  title: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          model.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      if (model.isFree) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.tintGreenBg,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: const Text(
+                            'FREE',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.tintGreenFg,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text(
+                    '${model.provider} · ${model.id}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11),
                   ),
                   onTap: () {
-                    ref.read(agentChatProvider.notifier).setModel(model);
+                    ref.read(agentChatProvider.notifier).setModel(model.label);
                     Navigator.of(sheetCtx).pop();
                   },
                 );

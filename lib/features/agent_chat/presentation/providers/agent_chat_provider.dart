@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../data/datasources/mock_agent_chat_datasource.dart';
+import '../../data/datasources/openrouter_agent_datasource.dart';
 import '../../data/repositories/agent_chat_repository_impl.dart';
+import '../../domain/entities/ai_gateway_entities.dart';
 import '../../domain/entities/chat_entities.dart';
 import '../../domain/repositories/agent_chat_repository.dart';
 import '../../domain/usecases/send_coding_prompt.dart';
+import 'ai_gateway_provider.dart';
 
 const Object _unset = Object();
 
@@ -17,6 +20,7 @@ class AgentChatState {
     required this.activeSessionId,
     required this.mode,
     required this.selectedModel,
+    this.selectedAgentId = 'wynn-coder',
     this.isStreaming = false,
     this.isVoiceListening = false,
     this.attachedContextFiles = const [],
@@ -27,10 +31,13 @@ class AgentChatState {
   final String activeSessionId;
   final AgentMode mode;
   final String selectedModel;
+  final String selectedAgentId;
   final bool isStreaming;
   final bool isVoiceListening;
   final List<String> attachedContextFiles;
   final String? errorMessage;
+
+  AiAgentProfile get selectedAgent => findAgentById(selectedAgentId);
 
   ChatSession get activeSession => sessions.firstWhere(
     (s) => s.id == activeSessionId,
@@ -48,6 +55,7 @@ class AgentChatState {
     String? activeSessionId,
     AgentMode? mode,
     String? selectedModel,
+    String? selectedAgentId,
     bool? isStreaming,
     bool? isVoiceListening,
     List<String>? attachedContextFiles,
@@ -58,6 +66,7 @@ class AgentChatState {
       activeSessionId: activeSessionId ?? this.activeSessionId,
       mode: mode ?? this.mode,
       selectedModel: selectedModel ?? this.selectedModel,
+      selectedAgentId: selectedAgentId ?? this.selectedAgentId,
       isStreaming: isStreaming ?? this.isStreaming,
       isVoiceListening: isVoiceListening ?? this.isVoiceListening,
       attachedContextFiles: attachedContextFiles ?? this.attachedContextFiles,
@@ -69,14 +78,16 @@ class AgentChatState {
 }
 
 final agentChatRepositoryProvider = Provider<AgentChatRepository>((ref) {
-  return AgentChatRepositoryImpl(MockAgentChatDatasource());
+  return AgentChatRepositoryImpl(
+    MockAgentChatDatasource(),
+    remoteDatasource: OpenRouterAgentDatasource(),
+    configReader: () => ref.read(aiGatewayProvider),
+  );
 });
 
 class AgentChatNotifier extends Notifier<AgentChatState> {
-  static const List<String> availableModels = [
-    'Gemini 4 Pro',
-    'Claude 4 Sonnet',
-    'WynnFast Local',
+  static final List<String> availableModels = [
+    for (final model in kOpenRouterModels) model.label,
   ];
 
   StreamSubscription<PromptStreamChunk>? _activeSubscription;
@@ -150,6 +161,15 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
 
   void setModel(String model) {
     state = state.copyWith(selectedModel: model);
+  }
+
+  void setAgent(AiAgentProfile agent, {bool applyDefaultModel = true}) {
+    state = state.copyWith(
+      selectedAgentId: agent.id,
+      selectedModel: applyDefaultModel
+          ? agent.defaultModelLabel
+          : state.selectedModel,
+    );
   }
 
   void toggleVoiceInput() {
@@ -381,6 +401,9 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
         prompt: prompt,
         mode: state.mode,
         modelName: state.selectedModel,
+        agent: state.selectedAgent,
+        history: state.messages,
+        attachedFiles: attachedFiles,
       );
 
       _activeSubscription = stream.listen(

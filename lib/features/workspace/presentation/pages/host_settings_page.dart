@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/motion_widgets.dart';
+import '../../../agent_chat/domain/entities/ai_gateway_entities.dart';
+import '../../../agent_chat/presentation/providers/ai_gateway_provider.dart';
 import '../../../ai_avatar/presentation/widgets/avatar_debug_page.dart';
 import '../../domain/entities/workspace_entities.dart';
 import '../providers/workspace_provider.dart';
@@ -298,6 +300,8 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
             ),
           ),
           const SizedBox(height: 14),
+          const _AiGatewayCard(),
+          const SizedBox(height: 14),
           GlassCard(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             blur: false,
@@ -380,6 +384,270 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiGatewayCard extends ConsumerStatefulWidget {
+  const _AiGatewayCard();
+
+  @override
+  ConsumerState<_AiGatewayCard> createState() => _AiGatewayCardState();
+}
+
+class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
+  late final TextEditingController _baseUrlController;
+  late final TextEditingController _apiKeyController;
+  bool _obscureKey = true;
+  bool _testing = false;
+  GatewayTestResult? _lastTest;
+
+  @override
+  void initState() {
+    super.initState();
+    final cfg = ref.read(aiGatewayProvider);
+    _baseUrlController = TextEditingController(text: cfg.baseUrl);
+    _apiKeyController = TextEditingController(text: cfg.apiKey);
+  }
+
+  @override
+  void dispose() {
+    _baseUrlController.dispose();
+    _apiKeyController.dispose();
+    super.dispose();
+  }
+
+  void _saveConfig() {
+    ref.read(aiGatewayProvider.notifier).updateConfig(
+      baseUrl: _baseUrlController.text.trim(),
+      apiKey: _apiKeyController.text.trim(),
+    );
+  }
+
+  Future<void> _saveAndTest() async {
+    _saveConfig();
+    setState(() => _testing = true);
+    final res = await ref.read(aiGatewayProvider.notifier).testConnection();
+    if (!mounted) return;
+    setState(() {
+      _testing = false;
+      _lastTest = res;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res.message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _applyPreset(String url) {
+    _baseUrlController.text = url;
+    ref.read(aiGatewayProvider.notifier).applyGatewayPreset(url);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cfg = ref.watch(aiGatewayProvider);
+    final badgeBg = cfg.isConfigured
+        ? AppColors.tintGreenBg
+        : AppColors.tintAmberBg;
+    final badgeFg = cfg.isConfigured
+        ? AppColors.tintGreenFg
+        : AppColors.tintAmberFg;
+
+    return GlassCard(
+      blur: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.tintPurpleBg,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.hub_rounded,
+                  color: AppColors.tintPurpleFg,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Gateway (OpenRouter)',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      'Multi-model & Multi-agent streaming',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  cfg.isConfigured ? 'Live AI' : 'Mock Mode',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: badgeFg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              ActionChip(
+                label: const Text('OpenRouter', style: TextStyle(fontSize: 11.5)),
+                backgroundColor: AppColors.primarySoft,
+                onPressed: () => _applyPreset(kDefaultOpenRouterBaseUrl),
+              ),
+              ActionChip(
+                label: const Text('Gemini Compat', style: TextStyle(fontSize: 11.5)),
+                backgroundColor: AppColors.surfaceSubtle,
+                onPressed: () => _applyPreset(
+                  'https://generativelanguage.googleapis.com/v1beta/openai',
+                ),
+              ),
+              ActionChip(
+                label: const Text('Ollama Lokal', style: TextStyle(fontSize: 11.5)),
+                backgroundColor: AppColors.surfaceSubtle,
+                onPressed: () => _applyPreset('http://127.0.0.1:11434/v1'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _baseUrlController,
+            keyboardType: TextInputType.url,
+            style: AppTheme.monoStyle(fontSize: 12),
+            onChanged: (_) => _saveConfig(),
+            decoration: InputDecoration(
+              labelText: 'Gateway Base URL',
+              hintText: kDefaultOpenRouterBaseUrl,
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.78),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.borderDivider),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 11,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _apiKeyController,
+            obscureText: _obscureKey,
+            style: AppTheme.monoStyle(fontSize: 12),
+            onChanged: (_) => _saveConfig(),
+            decoration: InputDecoration(
+              labelText: 'API Key (sk-or-v1-...)',
+              hintText: 'Kosongkan untuk tetap di Mock Mode',
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.78),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.borderDivider),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 11,
+              ),
+              suffixIcon: IconButton(
+                tooltip: _obscureKey ? 'Tampilkan API Key' : 'Sembunyikan',
+                icon: Icon(
+                  _obscureKey
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
+                  size: 19,
+                ),
+                onPressed: () => setState(() => _obscureKey = !_obscureKey),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Aktifkan AI Gateway Live',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              cfg.isConfigured
+                  ? 'Prompt dikirim langsung ke OpenRouter SSE'
+                  : 'Isi API Key untuk beralih dari mock ke AI sungguhan',
+              style: const TextStyle(fontSize: 11.2),
+            ),
+            value: cfg.useLiveGateway,
+            activeTrackColor: AppColors.primary,
+            onChanged: (v) =>
+                ref.read(aiGatewayProvider.notifier).updateConfig(
+                  useLiveGateway: v,
+                ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _testing ? null : _saveAndTest,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.bolt_rounded, size: 18),
+              label: Text(
+                _testing ? 'Mengetes AI Gateway…' : 'Simpan & Tes AI Gateway',
+              ),
+            ),
+          ),
+          if (_lastTest != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _lastTest!.message,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: _lastTest!.ok
+                    ? AppColors.tintGreenFg
+                    : AppColors.diffDelText,
+              ),
+            ),
+          ],
         ],
       ),
     );
