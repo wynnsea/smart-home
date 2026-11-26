@@ -44,6 +44,7 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _scrollToBottom(immediate: true);
   }
 
   @override
@@ -55,8 +56,7 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
 
   bool get _isNearBottom {
     if (!_scrollController.hasClients) return true;
-    final pos = _scrollController.position;
-    return (pos.maxScrollExtent - pos.pixels) < 80;
+    return _scrollController.position.pixels < 80;
   }
 
   void _onScroll() {
@@ -65,16 +65,15 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
     }
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool immediate = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scrollController.hasClients) return;
-      final target = _scrollController.position.maxScrollExtent;
-      if (MediaQuery.disableAnimationsOf(context)) {
-        _scrollController.jumpTo(target);
+      if (immediate || MediaQuery.disableAnimationsOf(context)) {
+        _scrollController.jumpTo(0);
       } else {
         _scrollController.animateTo(
-          target,
-          duration: const Duration(milliseconds: 280),
+          0,
+          duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
         );
       }
@@ -105,6 +104,7 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
         if (_showNewMessageChip && mounted) {
           setState(() => _showNewMessageChip = false);
         }
+        _scrollToBottom(immediate: true);
         return;
       }
       final countChanged = (prev?.messages.length ?? 0) != next.messages.length;
@@ -332,12 +332,15 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
                   )
                 else
                   ListView.separated(
+                    key: ValueKey('chat-list-${chatState.activeSessionId}'),
                     controller: _scrollController,
+                    reverse: true,
                     padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
                     itemCount: chatState.messages.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
-                      final message = chatState.messages[index];
+                      final msgIndex = chatState.messages.length - 1 - index;
+                      final message = chatState.messages[msgIndex];
                       if (message.isUser) {
                         return UserMessageBubble(message: message);
                       }
@@ -346,7 +349,7 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
                       );
                       return InvestigationMessageBubble(
                         message: message,
-                        isLatestAgentMessage: index == lastAgentIndex,
+                        isLatestAgentMessage: msgIndex == lastAgentIndex,
                         diffFilesByPath: diffFilesByPath,
                         onFileTap: (filePath) => showGitDiffBottomSheet(
                           context,

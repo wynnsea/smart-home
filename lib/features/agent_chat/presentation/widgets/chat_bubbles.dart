@@ -6,8 +6,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/file_chip.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/motion_widgets.dart';
-import '../../../ai_avatar/domain/avatar_mood.dart';
-import '../../../ai_avatar/presentation/widgets/wynn_ai_avatar.dart';
 import '../../../git_diff/domain/entities/diff_entities.dart';
 import '../../domain/entities/chat_entities.dart';
 
@@ -83,7 +81,7 @@ class UserMessageBubble extends StatelessWidget {
                 borderRadius: bubbleRadius,
                 child: Container(
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.sizeOf(context).width * 0.74,
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.84,
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -145,34 +143,6 @@ class UserMessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3E3563), Color(0xFF6B53D6)],
-              ),
-              border: Border.all(color: Colors.white, width: 1.8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'W',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -209,18 +179,6 @@ class InvestigationMessageBubble extends StatelessWidget {
       child: Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: WynnAiAvatar(
-            size: AvatarSize.xs,
-            animate: isLatestAgentMessage,
-            interactive: isLatestAgentMessage,
-            moodOverride: isLatestAgentMessage
-                ? null
-                : (message.isError ? AvatarMood.error : AvatarMood.idle),
-          ),
-        ),
-        SizedBox(width: isLatestAgentMessage ? 4 : 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +190,8 @@ class InvestigationMessageBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (message.statusBadge != null) ...[
+                    if (message.statusBadge != null &&
+                        (message.isError || message.isStreaming)) ...[
                       GestureDetector(
                         onTap: message.isError ? onRetry : null,
                         child: Container(
@@ -243,9 +202,7 @@ class InvestigationMessageBubble extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: message.isError
                                 ? AppColors.diffDelBg
-                                : message.isStreaming
-                                ? AppColors.tintBlueBg
-                                : AppColors.primarySoft,
+                                : AppColors.tintBlueBg,
                             borderRadius: BorderRadius.circular(10),
                             border: message.isError
                                 ? Border.all(
@@ -267,20 +224,11 @@ class InvestigationMessageBubble extends StatelessWidget {
                                     color: AppColors.diffDelText,
                                   ),
                                 )
-                              else if (message.isStreaming)
+                              else
                                 const Padding(
                                   padding: EdgeInsets.only(right: 6),
                                   child: TypingWaveDots(
                                     color: AppColors.tintBlueFg,
-                                  ),
-                                )
-                              else
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 5),
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 12,
-                                    color: AppColors.primary,
                                   ),
                                 ),
                               Flexible(
@@ -293,9 +241,7 @@ class InvestigationMessageBubble extends StatelessWidget {
                                     fontWeight: FontWeight.w700,
                                     color: message.isError
                                         ? AppColors.diffDelText
-                                        : message.isStreaming
-                                        ? AppColors.tintBlueFg
-                                        : AppColors.primaryDark,
+                                        : AppColors.tintBlueFg,
                                   ),
                                 ),
                               ),
@@ -305,7 +251,7 @@ class InvestigationMessageBubble extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                     ],
-                    if (message.heading != null) ...[
+                    if (message.isError && message.heading != null) ...[
                       Text(
                         message.heading!,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -342,6 +288,36 @@ class InvestigationMessageBubble extends StatelessWidget {
                             onTap: () => onFileTap(path),
                           );
                         }).toList(),
+                      ),
+                    ],
+                    if (!message.isError &&
+                        !message.isStreaming &&
+                        message.statusBadge != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 11,
+                            color: AppColors.adaptiveTextSecondary(context)
+                                .withValues(alpha: 0.78),
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              message.statusBadge!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.adaptiveTextSecondary(context)
+                                    .withValues(alpha: 0.82),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
