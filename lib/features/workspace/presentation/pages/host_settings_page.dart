@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../core/network/wynn_bridge_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_surface.dart';
@@ -25,19 +26,27 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _addressController;
   late final TextEditingController _portController;
+  late final TextEditingController _bridgeTokenController;
 
   @override
   void initState() {
     super.initState();
     final status = ref.read(workspaceOverviewProvider).hostStatus;
-    _addressController = TextEditingController(text: status.hostAddress);
-    _portController = TextEditingController(text: '${status.hostPort}');
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    _addressController = TextEditingController(
+      text: bridgeCfg.enabled ? bridgeCfg.hostAddress : status.hostAddress,
+    );
+    _portController = TextEditingController(
+      text: '${bridgeCfg.enabled ? bridgeCfg.hostPort : status.hostPort}',
+    );
+    _bridgeTokenController = TextEditingController(text: bridgeCfg.token);
   }
 
   @override
   void dispose() {
     _addressController.dispose();
     _portController.dispose();
+    _bridgeTokenController.dispose();
     super.dispose();
   }
 
@@ -64,16 +73,33 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final address = _addressController.text.trim();
     final port = int.parse(_portController.text.trim());
+    ref
+        .read(bridgeConfigProvider.notifier)
+        .update(
+          hostAddress: address,
+          hostPort: port,
+          token: _bridgeTokenController.text.trim(),
+        );
     final notifier = ref.read(workspaceOverviewProvider.notifier);
     notifier.updateHostEndpoint(address: address, port: port);
-    final latency = await notifier.reconnect();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Terhubung ke $address:$port (${latency}ms)'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    try {
+      final latency = await notifier.reconnect();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terhubung ke $address:$port (${latency}ms)'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -234,7 +260,60 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _bridgeTokenController,
+                    obscureText: true,
+                    style: AppTheme.monoStyle(fontSize: 12),
+                    onChanged: (v) => ref
+                        .read(bridgeConfigProvider.notifier)
+                        .update(token: v.trim()),
+                    decoration: InputDecoration(
+                      labelText: 'Bridge Token (samakan dengan .env PC)',
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.78),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: AppColors.borderDivider,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SwitchListTile.adaptive(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text(
+                      'Aktifkan Remote Bridge (PC)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      ref.watch(bridgeConfigProvider).isActive
+                          ? 'Chat & Git Diff tersambung ke PC Host'
+                          : 'Nonaktif (pakai OpenRouter langsung / Mock)',
+                      style: const TextStyle(fontSize: 11.2),
+                    ),
+                    value: ref.watch(bridgeConfigProvider).enabled,
+                    activeTrackColor: AppColors.primary,
+                    onChanged: (v) => ref
+                        .read(bridgeConfigProvider.notifier)
+                        .update(
+                          hostAddress: _addressController.text.trim(),
+                          hostPort:
+                              int.tryParse(_portController.text.trim()) ?? 8787,
+                          token: _bridgeTokenController.text.trim(),
+                          enabled: v,
+                        ),
+                  ),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(

@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wynndiff/core/config/app_env.dart';
+import 'package:wynndiff/core/network/wynn_bridge_client.dart';
 import 'package:wynndiff/features/agent_chat/data/datasources/openrouter_agent_datasource.dart';
 import 'package:wynndiff/features/agent_chat/domain/entities/ai_gateway_entities.dart';
 import 'package:wynndiff/features/agent_chat/domain/entities/chat_entities.dart';
 import 'package:wynndiff/features/agent_chat/presentation/providers/agent_chat_provider.dart';
 import 'package:wynndiff/features/agent_chat/presentation/providers/ai_gateway_provider.dart';
+import 'package:wynndiff/features/git_diff/domain/entities/diff_entities.dart';
 
 void main() {
   group('OpenRouter SSE parser', () {
@@ -36,16 +38,16 @@ void main() {
   group('Multi-agent OpenRouter payload & model resolution', () {
     test('resolves UI labels and raw OpenRouter slugs accurately', () {
       expect(
-        resolveOpenRouterModelId('Claude 4 Sonnet'),
-        equals('anthropic/claude-sonnet-4'),
+        resolveOpenRouterModelId('Claude Sonnet 5.5'),
+        equals('anthropic/claude-sonnet-5.5'),
       );
       expect(
-        resolveOpenRouterModelId('DeepSeek R1 (Free)'),
-        equals('deepseek/deepseek-r1:free'),
+        resolveOpenRouterModelId('OpenRouter Free Auto'),
+        equals('openrouter/free'),
       );
       expect(
-        resolveOpenRouterModelId('qwen/qwen3-coder:free'),
-        equals('qwen/qwen3-coder:free'),
+        resolveOpenRouterModelId('qwen/qwen3.8-max-prime'),
+        equals('qwen/qwen3.8-max-prime'),
       );
     });
 
@@ -54,12 +56,12 @@ void main() {
       final payload = buildOpenRouterPayload(
         prompt: 'Kenapa stream putus?',
         mode: AgentMode.investigate,
-        modelName: 'Claude 4 Sonnet',
+        modelName: 'Claude Sonnet 5.5',
         agent: agent,
         attachedFiles: const ['lib/sse_client.dart'],
       );
 
-      expect(payload['model'], equals('anthropic/claude-sonnet-4'));
+      expect(payload['model'], equals('anthropic/claude-sonnet-5.5'));
       expect(payload['stream'], isTrue);
       final messages = payload['messages'] as List<Map<String, String>>;
       expect(messages.first['role'], equals('system'));
@@ -101,6 +103,36 @@ void main() {
 
       expect(parsed['OPENROUTER_API_KEY'], equals('sk-or-v1-abc123'));
       expect(parsed['AI_GATEWAY_URL'], equals('https://openrouter.ai/api/v1'));
+    });
+
+    test('parseBridgeDiffSnapshot maps Go bridge JSON into GitDiffSnapshot', () {
+      final snap = parseBridgeDiffSnapshot({
+        'repoFullName': 'wynnsea/smart-home',
+        'branch': 'main',
+        'files': [
+          {
+            'path': 'lib/main.dart',
+            'status': 'modified',
+            'additions': 1,
+            'deletions': 1,
+            'hunks': [
+              {
+                'header': '@@ -1,2 +1,2 @@',
+                'lines': [
+                  {'type': 'remove', 'oldLine': 1, 'newLine': null, 'content': 'old'},
+                  {'type': 'add', 'oldLine': null, 'newLine': 1, 'content': 'new'},
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(snap.repoFullName, equals('wynnsea/smart-home'));
+      expect(snap.files.length, equals(1));
+      expect(snap.files.first.status, equals(DiffFileStatus.modified));
+      expect(snap.files.first.lines.length, equals(3));
+      expect(snap.files.first.lines.first.type, equals(DiffLineType.hunkHeader));
     });
   });
 }

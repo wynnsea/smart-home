@@ -268,13 +268,13 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
                               tooltip: 'Mode & Model',
                               onTap: () => _openModeModelPicker(context),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             _ComposerIconButton(
                               icon: Icons.add_rounded,
                               tooltip: 'Attach file context',
                               onTap: () => _openAttachContextSheet(context),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             _ComposerIconButton(
                               icon: Icons.mic_none_rounded,
                               tooltip: 'Input suara',
@@ -715,8 +715,8 @@ class _ComposerIconButton extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             child: Center(
               child: Container(
                 width: 36,

@@ -62,4 +62,8 @@ abstract final class AppEnv {
     if (_defineGatewayUrl.trim().isNotEmpty) return _defineGatewayUrl.trim();
     return get('AI_GATEWAY_URL', fallback: 'https://openrouter.ai/api/v1');
   }
+
+  static String get bridgeHost => get('BRIDGE_HOST');
+  static int get bridgePort => int.tryParse(get('BRIDGE_PORT')) ?? 8787;
+  static String get bridgeToken => get('BRIDGE_TOKEN');
 }

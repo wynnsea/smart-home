@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/wynn_bridge_client.dart';
 import '../../data/datasources/mock_git_diff_datasource.dart';
 import '../../data/repositories/git_diff_repository_impl.dart';
 import '../../domain/entities/diff_entities.dart';
@@ -82,6 +83,27 @@ class GitDiffNotifier extends Notifier<GitDiffUiState> {
     List<String>? filePaths,
     bool pushToRemote = true,
   }) async {
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    if (bridgeCfg.isActive) {
+      state = state.copyWith(isBusy: true);
+      try {
+        final msg = await WynnBridgeClient().commitAndPush(
+          bridgeCfg,
+          message: commitMessage,
+          push: pushToRemote,
+        );
+        await refresh();
+        state = state.copyWith(
+          isBusy: false,
+          snapshot: state.snapshot.copyWith(lastActionMessage: msg),
+        );
+        return msg;
+      } catch (e) {
+        state = state.copyWith(isBusy: false);
+        return 'Gagal commit/push: ${e.toString().replaceFirst('Exception: ', '')}';
+      }
+    }
+
     final targetPaths =
         filePaths ?? state.snapshot.files.map((f) => f.path).toList();
     state = state.copyWith(isBusy: true);
@@ -107,6 +129,20 @@ class GitDiffNotifier extends Notifier<GitDiffUiState> {
   }
 
   Future<String> discardAllChanges() async {
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    if (bridgeCfg.isActive) {
+      state = state.copyWith(isBusy: true);
+      try {
+        await WynnBridgeClient().resetChanges(bridgeCfg);
+        await refresh();
+        state = state.copyWith(isBusy: false);
+        return 'Semua perubahan di PC host dibuang';
+      } catch (e) {
+        state = state.copyWith(isBusy: false);
+        return 'Gagal discard: ${e.toString().replaceFirst('Exception: ', '')}';
+      }
+    }
+
     final backup = state.snapshot;
     state = state.copyWith(isBusy: true);
     final useCase = DiscardChangesUseCase(ref.read(gitDiffRepositoryProvider));
@@ -121,6 +157,20 @@ class GitDiffNotifier extends Notifier<GitDiffUiState> {
   }
 
   Future<String> revertFile(String filePath) async {
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    if (bridgeCfg.isActive) {
+      state = state.copyWith(isBusy: true);
+      try {
+        await WynnBridgeClient().resetChanges(bridgeCfg, filePath: filePath);
+        await refresh();
+        state = state.copyWith(isBusy: false);
+        return 'File $filePath dikembalikan di PC host';
+      } catch (e) {
+        state = state.copyWith(isBusy: false);
+        return 'Gagal revert: ${e.toString().replaceFirst('Exception: ', '')}';
+      }
+    }
+
     final backup = state.snapshot;
     state = state.copyWith(isBusy: true);
     final useCase = RevertFileUseCase(ref.read(gitDiffRepositoryProvider));
@@ -162,6 +212,25 @@ class GitDiffNotifier extends Notifier<GitDiffUiState> {
   }
 
   Future<void> refresh() async {
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    if (bridgeCfg.isActive) {
+      try {
+        final fresh = await WynnBridgeClient().fetchGitDiff(bridgeCfg);
+        final keepSelected =
+            fresh.files.any((f) => f.path == state.selectedFilePath)
+            ? state.selectedFilePath
+            : (fresh.files.isNotEmpty ? fresh.files.first.path : null);
+        state = GitDiffUiState(
+          snapshot: fresh,
+          selectedFilePath: keepSelected,
+        );
+        return;
+      } catch (_) {
+        // Keep current snapshot on transient bridge error
+        return;
+      }
+    }
+
     await Future<void>.delayed(const Duration(milliseconds: 600));
     final repo = ref.read(gitDiffRepositoryProvider);
     final fresh = GetGitDiffSnapshotUseCase(repo).call();

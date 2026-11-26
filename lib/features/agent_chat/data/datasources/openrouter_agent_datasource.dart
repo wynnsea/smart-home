@@ -143,6 +143,7 @@ Map<String, Object?> buildOpenRouterPayload({
   return <String, Object?>{
     'model': modelId,
     'stream': true,
+    'max_tokens': 2048,
     'messages': messages,
   };
 }

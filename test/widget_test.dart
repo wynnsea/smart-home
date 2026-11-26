@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wynndiff/app.dart';
-import 'package:wynndiff/features/agent_chat/presentation/pages/investigation_chat_page.dart';
 
 void main() {
   setUpAll(() {
@@ -30,54 +29,45 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('Continue Coding'), findsOneWidget);
 
-      // Navigate to Chat tab
+      // Navigate to Chat tab (starts clean with zero dummy messages and NO bottom nav!)
       await tester.tap(find.byIcon(Icons.chat_bubble_outline_rounded));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
-      expect(find.text('Investigate Auth & Diff'), findsOneWidget);
-      expect(find.text('Investigation & Patch Summary'), findsOneWidget);
+      expect(find.text('Mulai sesi baru'), findsOneWidget);
+      expect(find.byIcon(Icons.difference_outlined), findsNothing);
 
-      // Scroll chat stream and open Diff Sheet via inline file chip
-      final chatList = find.descendant(
-        of: find.byType(InvestigationChatPage),
-        matching: find.byType(ListView),
-      );
-      await tester.drag(chatList, const Offset(0, -560));
-      await tester.pump(const Duration(milliseconds: 250));
-      expect(find.text('sse_client.dart'), findsOneWidget);
-
-      await tester.tap(find.text('sse_client.dart'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 450));
-
-      expect(find.text('Changed Files & Git Diff'), findsOneWidget);
-      expect(find.text('Commit & Push'), findsOneWidget);
-
-      await tester.tap(find.byIcon(Icons.close_rounded));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 450));
-
-      // Open Mode & Model picker
+      // Open Mode & Model picker inside Chat
       await tester.tap(find.byIcon(Icons.auto_fix_high_rounded));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
       expect(find.text('Agent Mode & Model'), findsOneWidget);
 
-      await tester.tap(find.text('Claude 4 Sonnet'));
+      await tester.tap(find.text('Claude Sonnet 5.5'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
 
-      // Open Session List Sheet and create a new session → Empty state
-      await tester.tap(find.text('Investigate Auth & Diff'));
+      // Open Session List Sheet
+      await tester.tap(find.text('Sesi baru').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
       expect(find.text('Daftar Sesi'), findsOneWidget);
 
-      await tester.tap(find.text('Sesi baru'));
+      await tester.tap(find.text('Sesi baru').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
       expect(find.text('Mulai sesi baru'), findsOneWidget);
+
+      // Return to Home via Chat top-left back button -> bottom nav reappears
+      await tester.tap(find.byIcon(Icons.chevron_left_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      // Open Diff tab via bottom nav
+      await tester.tap(find.byIcon(Icons.difference_outlined));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('Working tree bersih'), findsOneWidget);
 
       // Open Agent Hub via purple Sparkle FAB
       await tester.tap(find.byIcon(Icons.auto_awesome_rounded).last);
@@ -134,13 +124,7 @@ void main() {
       await tester.pump();
       expect(find.text('Host terputus · Sambungkan ulang'), findsNothing);
 
-      // Switch to a fresh empty session so error bubble is immediately visible
-      await tester.tap(find.text('Investigate Auth & Diff'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.tap(find.text('Sesi baru'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+      // Chat already starts clean with empty state
       expect(find.text('Mulai sesi baru'), findsOneWidget);
 
       // Trigger /fail prompt error handling

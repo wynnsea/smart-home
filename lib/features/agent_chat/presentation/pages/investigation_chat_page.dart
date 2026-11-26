@@ -25,9 +25,11 @@ class InvestigationChatPage extends ConsumerStatefulWidget {
   const InvestigationChatPage({
     super.key,
     this.showBackButton = false,
+    this.onBack,
   });
 
   final bool showBackButton;
+  final VoidCallback? onBack;
 
   @override
   ConsumerState<InvestigationChatPage> createState() =>
@@ -119,8 +121,9 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
       }
     });
 
+    final hasBackAction = widget.showBackButton || widget.onBack != null;
     final content = SafeArea(
-      bottom: widget.showBackButton,
+      bottom: true,
       child: Column(
         children: [
           // Top App Bar (tap title to switch session or create new chat — T3.2)
@@ -128,11 +131,11 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Row(
               children: [
-                if (widget.showBackButton) ...[
+                if (hasBackAction) ...[
                   GlassCircleButton(
                     icon: Icons.chevron_left_rounded,
                     tooltip: 'Kembali',
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: widget.onBack ?? () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 6),
                 ],
@@ -225,10 +228,10 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                // iOS 26 grouped Liquid Glass top-bar pill cluster (>= 48px targets)
+                // iOS 26 grouped Liquid Glass top-bar pill cluster
                 LiquidGlassPill(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  height: 42,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -398,13 +401,13 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
               ],
             ),
           ),
-          // Bottom Prompt Composer (keyboard-aware padding — T3.4)
+          // Bottom Prompt Composer (full-bleed without bottom nav dock)
           Padding(
             padding: EdgeInsets.fromLTRB(
               16,
               4,
               16,
-              widget.showBackButton ? 12 : (keyboardOpen ? 12 : 102),
+              keyboardOpen ? 10 : 12,
             ),
             child: PromptComposerCard(
               hintText: 'Ask anything...',
@@ -599,8 +602,8 @@ class _PillBarAction extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: 36,
+            height: 40,
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
@@ -608,8 +611,8 @@ class _PillBarAction extends StatelessWidget {
                 Icon(icon, size: 19, color: AppColors.textPrimary),
                 if (badgeText != null)
                   Positioned(
-                    top: 5,
-                    right: 5,
+                    top: 3,
+                    right: 1,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 4.5,

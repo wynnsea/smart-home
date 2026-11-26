@@ -228,28 +228,76 @@ class HomeDashboardPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ...List.generate(overview.recentSessions.length, (i) {
-            final session = overview.recentSessions[i];
-            return FadeSlideEntrance(
-              delay: Duration(milliseconds: 390 + i * 70),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: SessionContinueCard(
-                  session: session,
-                  onTap: () {
-                    ref.read(agentChatProvider.notifier).openSessionById(
-                      session.id,
-                      fallbackTitle: session.title,
-                      fallbackRepo: session.repoFullName,
-                      fallbackBranch: session.branch,
-                      fallbackSummary: session.summary,
-                    );
-                    onNavigateTab(1);
-                  },
-                ),
+          if (overview.recentSessions.isEmpty)
+            GlassCard(
+              blur: false,
+              onTap: () => onNavigateTab(1),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.forum_outlined,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Belum ada sesi aktif',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Ketuk di sini untuk mulai chat AI atau sambungkan PC Bridge di tab Host.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 11.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
               ),
-            );
-          }),
+            )
+          else
+            ...List.generate(overview.recentSessions.length, (i) {
+              final session = overview.recentSessions[i];
+              return FadeSlideEntrance(
+                delay: Duration(milliseconds: 390 + i * 70),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: SessionContinueCard(
+                    session: session,
+                    onTap: () {
+                      ref.read(agentChatProvider.notifier).openSessionById(
+                        session.id,
+                        fallbackTitle: session.title,
+                        fallbackRepo: session.repoFullName,
+                        fallbackBranch: session.branch,
+                        fallbackSummary: session.summary,
+                      );
+                      onNavigateTab(1);
+                    },
+                  ),
+                ),
+              );
+            }),
         ],
         ),
       ),

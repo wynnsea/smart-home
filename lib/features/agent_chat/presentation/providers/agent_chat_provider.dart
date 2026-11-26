@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/wynn_bridge_client.dart';
 import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../data/datasources/mock_agent_chat_datasource.dart';
 import '../../data/datasources/openrouter_agent_datasource.dart';
@@ -82,6 +83,8 @@ final agentChatRepositoryProvider = Provider<AgentChatRepository>((ref) {
     MockAgentChatDatasource(),
     remoteDatasource: OpenRouterAgentDatasource(),
     configReader: () => ref.read(aiGatewayProvider),
+    bridgeClient: WynnBridgeClient(),
+    bridgeConfigReader: () => ref.read(bridgeConfigProvider),
   );
 });
 
@@ -102,39 +105,13 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
     final repo = ref.watch(agentChatRepositoryProvider);
     final initialSessions = [
       ChatSession(
-        id: 'session-auth-refresh',
-        title: 'Investigate Auth & Diff',
-        repoFullName: 'wynnsea/wynndiff',
-        branch: 'feat/remote-diff',
+        id: 'session-default',
+        title: 'Sesi baru',
+        repoFullName: 'OpenRouter / Remote Host',
+        branch: 'main',
         messages: repo.getInitialMessages(),
         logs: repo.getInitialLogs(),
-        updatedAt: '2m ago',
-      ),
-      const ChatSession(
-        id: 'session-ui-shell',
-        title: 'Refine Mobile Diff Sheet & Patch Hunks',
-        repoFullName: 'wynnsea/wynndiff',
-        branch: 'ui/ethereal-v2',
-        messages: [
-          ChatMessage(
-            id: 'ui-shell-summary',
-            isUser: false,
-            timestampLabel: '09:40',
-            heading: 'Ringkasan Sesi UI Diff Sheet',
-            statusBadge: '2 files changed',
-            text:
-                '2 files changed · Unified line gutter polish dan penyesuaian sheet Liquid Glass.',
-          ),
-        ],
-        logs: [
-          ExecutionLogEntry(
-            time: '09:40:12',
-            command: 'git checkout ui/ethereal-v2',
-            detail: 'Switched to branch ui/ethereal-v2',
-            isSuccess: true,
-          ),
-        ],
-        updatedAt: '42m ago',
+        updatedAt: 'Baru saja',
       ),
     ];
 
@@ -435,7 +412,11 @@ class AgentChatNotifier extends Notifier<AgentChatState> {
           );
 
           if (chunk.shouldGenerateDiff) {
-            ref.read(gitDiffProvider.notifier).addGeneratedPatch(prompt);
+            if (ref.read(bridgeConfigProvider).isActive) {
+              unawaited(ref.read(gitDiffProvider.notifier).refresh());
+            } else {
+              ref.read(gitDiffProvider.notifier).addGeneratedPatch(prompt);
+            }
           }
         },
         onError: (Object error, StackTrace _) {

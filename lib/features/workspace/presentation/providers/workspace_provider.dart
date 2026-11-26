@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/wynn_bridge_client.dart';
+import '../../../git_diff/presentation/providers/git_diff_provider.dart';
 import '../../data/datasources/mock_workspace_datasource.dart';
 import '../../data/repositories/workspace_repository_impl.dart';
 import '../../domain/entities/workspace_entities.dart';
@@ -30,6 +32,9 @@ class WorkspaceNotifier extends Notifier<WorkspaceOverview> {
         hostPort: port,
       ),
     );
+    ref
+        .read(bridgeConfigProvider.notifier)
+        .update(hostAddress: address.trim(), hostPort: port);
   }
 
   Future<int> reconnect() async {
@@ -41,6 +46,32 @@ class WorkspaceNotifier extends Notifier<WorkspaceOverview> {
         connectionState: HostConnectionState.connecting,
       ),
     );
+
+    final bridgeCfg = ref.read(bridgeConfigProvider);
+    if (bridgeCfg.isActive) {
+      final health = await WynnBridgeClient().fetchHealth(bridgeCfg);
+      if (health.ok) {
+        state = state.copyWith(
+          hostStatus: state.hostStatus.copyWith(
+            hostName: health.hostName,
+            repoFullName: health.repoFullName,
+            branch: health.branch,
+            connectionState: HostConnectionState.connected,
+            latencyMs: health.latencyMs,
+          ),
+        );
+        await ref.read(gitDiffProvider.notifier).refresh();
+        return health.latencyMs;
+      }
+      state = state.copyWith(
+        hostStatus: state.hostStatus.copyWith(
+          connectionState: HostConnectionState.disconnected,
+          latencyMs: 0,
+        ),
+      );
+      throw Exception(health.errorMessage ?? 'Bridge PC tidak merespons');
+    }
+
     await Future<void>.delayed(const Duration(milliseconds: 1200));
     const measuredLatency = 13;
     state = state.copyWith(

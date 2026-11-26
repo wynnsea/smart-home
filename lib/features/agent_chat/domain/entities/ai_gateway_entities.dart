@@ -43,7 +43,7 @@ const List<AiAgentProfile> kBuiltInAgents = [
     id: 'wynn-coder',
     name: 'Wynn Coder',
     tagline: 'Coding, refactor & fitur baru',
-    defaultModelLabel: 'Gemini 2.5 Flash',
+    defaultModelLabel: 'OpenRouter Free Auto',
     systemPrompt:
         'Kamu adalah Wynn, asisten coding senior yang ramah dan ringkas. '
         'Berikan solusi kode yang bersih, akurat, dan siap pakai dengan penjelasan singkat.',
@@ -52,7 +52,7 @@ const List<AiAgentProfile> kBuiltInAgents = [
     id: 'bug-hunter',
     name: 'Bug Hunter',
     tagline: 'Investigasi root-cause & debugging',
-    defaultModelLabel: 'Claude 4 Sonnet',
+    defaultModelLabel: 'Claude Sonnet 5.5',
     systemPrompt:
         'Kamu adalah Bug Hunter spesialis root-cause analysis. '
         'Fokus menemukan penyebab bug, race condition, edge case, dan langkah perbaikan minimal yang aman.',
@@ -61,7 +61,7 @@ const List<AiAgentProfile> kBuiltInAgents = [
     id: 'code-reviewer',
     name: 'Code Reviewer',
     tagline: 'Audit diff, performa & keamanan',
-    defaultModelLabel: 'GPT-4.1 Mini',
+    defaultModelLabel: 'GPT-6.2 Sol',
     systemPrompt:
         'Kamu adalah Code Reviewer yang teliti. '
         'Tinjau kode untuk potensi bug, celah keamanan, performa, dan keterbacaan secara terstruktur.',
@@ -70,7 +70,7 @@ const List<AiAgentProfile> kBuiltInAgents = [
     id: 'ui-architect',
     name: 'UI/UX Architect',
     tagline: 'Desain Flutter, animasi & aksesibilitas',
-    defaultModelLabel: 'Gemini 2.5 Pro',
+    defaultModelLabel: 'Gemini 4 Neon',
     systemPrompt:
         'Kamu adalah UI/UX Architect spesialis Flutter & desain modern. '
         'Bantu merancang layout responsif, animasi halus, dan pengalaman pengguna yang intuitif.',
@@ -78,50 +78,55 @@ const List<AiAgentProfile> kBuiltInAgents = [
   AiAgentProfile(
     id: 'wynn-free',
     name: 'Wynn Fast',
-    tagline: 'Tanya jawab cepat (Model gratis)',
-    defaultModelLabel: 'Gemini 2.0 Flash (Free)',
+    tagline: 'Tanya jawab cepat (Model gratis aktif)',
+    defaultModelLabel: 'OpenRouter Free Auto',
     systemPrompt:
         'Kamu adalah Wynn Fast, asisten serba bisa yang cepat, jelas, dan to-the-point.',
   ),
 ];
 
-/// OpenRouter model catalog (paid + free tiers + auto router).
+/// Latest verified OpenRouter model catalog (free-first default + frontier coding).
 const List<AiModelOption> kOpenRouterModels = [
   AiModelOption(
-    id: 'google/gemini-2.5-flash',
-    label: 'Gemini 2.5 Flash',
-    provider: 'Google',
+    id: 'openrouter/free',
+    label: 'OpenRouter Free Auto',
+    provider: 'OpenRouter',
+    isFree: true,
   ),
   AiModelOption(
-    id: 'anthropic/claude-sonnet-4',
-    label: 'Claude 4 Sonnet',
+    id: 'nvidia/nemotron-3.5-super-vl:free',
+    label: 'Nemotron 3.5 Super (Free)',
+    provider: 'NVIDIA',
+    isFree: true,
+  ),
+  AiModelOption(
+    id: 'anthropic/claude-sonnet-5.5',
+    label: 'Claude Sonnet 5.5',
     provider: 'Anthropic',
   ),
   AiModelOption(
-    id: 'google/gemini-2.5-pro',
-    label: 'Gemini 2.5 Pro',
+    id: 'google/gemini-4-neon',
+    label: 'Gemini 4 Neon',
     provider: 'Google',
   ),
   AiModelOption(
-    id: 'openai/gpt-4.1-mini',
-    label: 'GPT-4.1 Mini',
+    id: 'openai/gpt-6.2-sol',
+    label: 'GPT-6.2 Sol',
     provider: 'OpenAI',
   ),
   AiModelOption(
-    id: 'google/gemini-2.0-flash-exp:free',
-    label: 'Gemini 2.0 Flash (Free)',
-    provider: 'Google',
-    isFree: true,
-  ),
-  AiModelOption(
-    id: 'deepseek/deepseek-r1:free',
-    label: 'DeepSeek R1 (Free)',
+    id: 'deepseek/deepseek-v4.1-flash',
+    label: 'DeepSeek V4.1 Flash',
     provider: 'DeepSeek',
-    isFree: true,
   ),
   AiModelOption(
-    id: 'openrouter/auto',
-    label: 'OpenRouter Auto',
+    id: 'qwen/qwen3.8-max-prime',
+    label: 'Qwen 3.8 Max Prime',
+    provider: 'Qwen',
+  ),
+  AiModelOption(
+    id: 'openrouter/auto-code',
+    label: 'OpenRouter Auto-Code',
     provider: 'OpenRouter',
   ),
 ];
