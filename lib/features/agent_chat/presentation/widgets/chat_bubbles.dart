@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/file_chip.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/motion_widgets.dart';
+import '../../../ai_avatar/presentation/widgets/wynn_chat_companion.dart';
 import '../../../git_diff/domain/entities/diff_entities.dart';
 import '../../domain/entities/chat_entities.dart';
 
@@ -177,13 +178,27 @@ class InvestigationMessageBubble extends StatelessWidget {
       duration: const Duration(milliseconds: 380),
       offset: const Offset(-16, 12),
       child: Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GlassCard(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (isLatestAgentMessage)
+                      Positioned(
+                        top: -78,
+                        left: 6,
+                        child: WynnBubblePeeker(
+                          isStreaming: message.isStreaming,
+                          isError: message.isError,
+                          isLiked: message.isLiked,
+                          hasFileChanges: message.fileChips.isNotEmpty,
+                        ),
+                      ),
+                    GlassCard(
                 padding: const EdgeInsets.all(15),
                 borderRadius: 24,
                 blur: false,
@@ -323,6 +338,8 @@ class InvestigationMessageBubble extends StatelessWidget {
                   ],
                 ),
               ),
+                    ],
+                  ),
               // Subtle bottom utility row with >= 48px touch targets (T5.2)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
