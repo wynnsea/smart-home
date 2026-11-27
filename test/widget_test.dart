@@ -137,6 +137,8 @@ void main() {
       // Switch to Host tab and disconnect
       await tester.tap(find.byIcon(Icons.dns_outlined));
       await tester.pump(const Duration(milliseconds: 100));
+      await tester.drag(find.byType(ListView).first, const Offset(0, -180));
+      await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('Tes koneksi'), findsOneWidget);
 
       await tester.tap(find.text('Putuskan'));

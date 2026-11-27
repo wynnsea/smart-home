@@ -525,7 +525,9 @@ class _RichAgentText extends StatelessWidget {
 
   Widget _buildInlineMarkdown(BuildContext context, String raw) {
     final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: AppColors.textSecondary,
+      color: AppColors.isDark(context)
+          ? const Color(0xFFE6E9FA)
+          : AppColors.textPrimary,
     );
     final inlineRegex = RegExp(r'(\*\*[^*]+\*\*|`[^`]+`)');
     final spans = <InlineSpan>[];

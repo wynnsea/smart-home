@@ -261,19 +261,27 @@ class _PromptComposerCardState extends ConsumerState<PromptComposerCard> {
                             color: AppColors.adaptiveTextPrimary(context),
                           ),
                           decoration: InputDecoration(
+                            filled: false,
                             hintText: isDisconnected
                                 ? 'Host tidak terhubung'
                                 : isConnecting
                                 ? 'Menyambungkan ke host…'
                                 : widget.hintText,
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               fontSize: 14,
-                              color: AppColors.textMuted,
+                              color: AppColors.isDark(context)
+                                  ? const Color(0xFF8C94BA)
+                                  : AppColors.textMuted,
                             ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
-                              vertical: 6,
+                              vertical: 8,
                             ),
                           ),
                         ),

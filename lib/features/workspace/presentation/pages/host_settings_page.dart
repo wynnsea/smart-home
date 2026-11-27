@@ -217,56 +217,69 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                     children: [
                       Expanded(
                         flex: 3,
-                        child: TextFormField(
-                          controller: _addressController,
-                          validator: _validateAddress,
-                          keyboardType: TextInputType.url,
-                          style: AppTheme.monoStyle(fontSize: 12.5),
-                          decoration: InputDecoration(
-                            labelText: 'Alamat Host (Tailscale / IP)',
-                            filled: true,
-                            fillColor: AppColors.adaptiveInputFill(context),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: AppColors.adaptiveBorder(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _FieldLabel('Alamat Host (Tailscale / IP)'),
+                            TextFormField(
+                              controller: _addressController,
+                              validator: _validateAddress,
+                              keyboardType: TextInputType.url,
+                              style: AppTheme.monoStyle(fontSize: 12.5),
+                              decoration: InputDecoration(
+                                hintText: '100.85.100.80',
+                                filled: true,
+                                fillColor: AppColors.adaptiveInputFill(context),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: AppColors.adaptiveBorder(context),
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         flex: 2,
-                        child: TextFormField(
-                          controller: _portController,
-                          validator: _validatePort,
-                          keyboardType: TextInputType.number,
-                          style: AppTheme.monoStyle(fontSize: 12.5),
-                          decoration: InputDecoration(
-                            labelText: 'Port',
-                            filled: true,
-                            fillColor: AppColors.adaptiveInputFill(context),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: AppColors.adaptiveBorder(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _FieldLabel('Port'),
+                            TextFormField(
+                              controller: _portController,
+                              validator: _validatePort,
+                              keyboardType: TextInputType.number,
+                              style: AppTheme.monoStyle(fontSize: 12.5),
+                              decoration: InputDecoration(
+                                hintText: '8787',
+                                filled: true,
+                                fillColor: AppColors.adaptiveInputFill(context),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: AppColors.adaptiveBorder(context),
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
+                  const _FieldLabel('Bridge Token (samakan dengan .env Server)'),
                   TextField(
                     controller: _bridgeTokenController,
                     obscureText: true,
@@ -275,7 +288,7 @@ class _HostSettingsPageState extends ConsumerState<HostSettingsPage> {
                         .read(bridgeConfigProvider.notifier)
                         .update(token: v.trim()),
                     decoration: InputDecoration(
-                      labelText: 'Bridge Token (samakan dengan .env Server)',
+                      hintText: 'Masukkan BRIDGE_TOKEN...',
                       filled: true,
                       fillColor: AppColors.adaptiveInputFill(context),
                       border: OutlineInputBorder(
@@ -832,13 +845,13 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
             ],
           ),
           const SizedBox(height: 12),
+          const _FieldLabel('Gateway Base URL'),
           TextField(
             controller: _baseUrlController,
             keyboardType: TextInputType.url,
             style: AppTheme.monoStyle(fontSize: 12),
             onChanged: (_) => _saveConfig(),
             decoration: InputDecoration(
-              labelText: 'Gateway Base URL',
               hintText: kDefaultOpenRouterBaseUrl,
               filled: true,
               fillColor: AppColors.adaptiveInputFill(context),
@@ -854,14 +867,14 @@ class _AiGatewayCardState extends ConsumerState<_AiGatewayCard> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          const _FieldLabel('API Key (sk-or-v1-...)'),
           TextField(
             controller: _apiKeyController,
             obscureText: _obscureKey,
             style: AppTheme.monoStyle(fontSize: 12),
             onChanged: (_) => _saveConfig(),
             decoration: InputDecoration(
-              labelText: 'API Key (sk-or-v1-...)',
               hintText: 'Kosongkan untuk tetap di Mock Mode',
               filled: true,
               fillColor: AppColors.adaptiveInputFill(context),
@@ -970,7 +983,6 @@ class _PersonaMemoryCardState extends ConsumerState<_PersonaMemoryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GlassCard(
       blur: false,
       child: Column(
@@ -1012,21 +1024,21 @@ class _PersonaMemoryCardState extends ConsumerState<_PersonaMemoryCard> {
             ],
           ),
           const SizedBox(height: 12),
+          const _FieldLabel('Catatan yang diingat Wynn lintas sesi'),
           TextField(
             controller: _memoryController,
             minLines: 2,
             maxLines: 4,
             style: const TextStyle(fontSize: 12.5, height: 1.4),
             decoration: InputDecoration(
-              labelText: 'Catatan yang diingat Wynn lintas sesi',
               hintText: 'Contoh: Panggil aku Wayan, suka penjelasan santai...',
               filled: true,
-              fillColor: isDark
-                  ? const Color(0xFF14182D)
-                  : Colors.white.withValues(alpha: 0.78),
+              fillColor: AppColors.adaptiveInputFill(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.borderDivider),
+                borderSide: BorderSide(
+                  color: AppColors.adaptiveBorder(context),
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -1076,6 +1088,29 @@ class _PersonaMemoryCardState extends ConsumerState<_PersonaMemoryCard> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 6),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: AppColors.adaptiveTextSecondary(context),
+        ),
       ),
     );
   }

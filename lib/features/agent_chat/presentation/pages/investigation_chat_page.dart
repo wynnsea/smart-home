@@ -228,32 +228,84 @@ class _InvestigationChatPageState extends ConsumerState<InvestigationChatPage> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                // iOS 26 grouped Liquid Glass top-bar pill cluster
-                LiquidGlassPill(
-                  height: 42,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _PillBarAction(
-                        icon: Icons.terminal_rounded,
-                        tooltip: 'Log host',
-                        onTap: () => showTerminalLogsSheet(context),
+                PopupMenuButton<String>(
+                  tooltip: 'Menu Chat',
+                  color: AppColors.isDark(context)
+                      ? const Color(0xFF1E233D)
+                      : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    side: BorderSide(
+                      color: AppColors.adaptiveBorder(context),
+                    ),
+                  ),
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'logs':
+                        showTerminalLogsSheet(context);
+                      case 'files':
+                        showServerFileBrowserSheet(context);
+                      case 'diff':
+                        showGitDiffBottomSheet(context);
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    PopupMenuItem(
+                      value: 'logs',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.terminal_rounded,
+                            size: 18,
+                            color: AppColors.adaptiveTextPrimary(ctx),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('Log Host'),
+                        ],
                       ),
-                      _PillBarAction(
-                        icon: Icons.folder_copy_outlined,
-                        tooltip: 'File Explorer Server',
-                        onTap: () => showServerFileBrowserSheet(context),
+                    ),
+                    PopupMenuItem(
+                      value: 'files',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.folder_copy_outlined,
+                            size: 18,
+                            color: AppColors.adaptiveTextPrimary(ctx),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('File Explorer Server'),
+                        ],
                       ),
-                      _PillBarAction(
-                        icon: Icons.compare_arrows_rounded,
-                        tooltip: 'File berubah & diff',
-                        badgeText: diffState.snapshot.hasChanges
-                            ? '${diffState.snapshot.files.length}'
-                            : null,
-                        onTap: () => showGitDiffBottomSheet(context),
+                    ),
+                    PopupMenuItem(
+                      value: 'diff',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.compare_arrows_rounded,
+                            size: 18,
+                            color: AppColors.adaptiveTextPrimary(ctx),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            diffState.snapshot.hasChanges
+                                ? 'Git Diff (${diffState.snapshot.files.length})'
+                                : 'Git Diff',
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                  child: IgnorePointer(
+                    child: GlassCircleButton(
+                      icon: Icons.more_vert_rounded,
+                      tooltip: 'Menu Chat',
+                      badgeText: diffState.snapshot.hasChanges
+                          ? '${diffState.snapshot.files.length}'
+                          : null,
+                      onTap: () {},
+                    ),
                   ),
                 ),
               ],
@@ -504,80 +556,6 @@ class _EmptyChatState extends StatelessWidget {
               }).toList(),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PillBarAction extends StatelessWidget {
-  const _PillBarAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-    this.badgeText,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  final String? badgeText;
-
-  @override
-  Widget build(BuildContext context) {
-    final semanticLabel = badgeText != null
-        ? '$tooltip, $badgeText file berubah'
-        : tooltip;
-    return Semantics(
-      button: true,
-      label: semanticLabel,
-      child: Tooltip(
-        message: semanticLabel,
-        child: GestureDetector(
-          onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            width: 36,
-            height: 40,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 19,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFF2F3FF)
-                      : AppColors.textPrimary,
-                ),
-                if (badgeText != null)
-                  Positioned(
-                    top: 3,
-                    right: 1,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4.5,
-                        vertical: 1,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(99),
-                        border: Border.all(color: Colors.white, width: 1.2),
-                      ),
-                      child: Text(
-                        badgeText!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          height: 1.05,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
         ),
       ),
     );

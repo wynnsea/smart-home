@@ -19,6 +19,7 @@ import '../providers/avatar_renderer_provider.dart';
 import '../renderers/avatar_renderer.dart';
 import '../renderers/chibi_procedural_renderer.dart';
 import '../renderers/layered_sprite_renderer.dart';
+import '../renderers/render_3d_avatar_renderer.dart';
 import 'avatar_speech_bubble.dart';
 
 /// Main interactive AI mascot widget ("Wynn").
@@ -493,6 +494,19 @@ class _WynnAiAvatarState extends ConsumerState<WynnAiAvatar>
       avatarVisual = Hero(
         tag: widget.heroTag!,
         flightShuttleBuilder: (context, animation, direction, from, to) {
+          if (effectiveRenderer is Render3dAvatarRenderer &&
+              effectiveRenderer.isReady) {
+            return RepaintBoundary(
+              child: Image.asset(
+                effectiveRenderer.assetPathFor(
+                  effectiveMood,
+                  _motionController.activeLocalReaction,
+                ),
+                fit: BoxFit.contain,
+                gaplessPlayback: true,
+              ),
+            );
+          }
           return RepaintBoundary(
             child: SizedBox.expand(
               child: CustomPaint(painter: shuttlePainter),

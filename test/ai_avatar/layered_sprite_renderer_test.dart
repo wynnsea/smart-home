@@ -10,18 +10,26 @@ import 'package:wynndiff/features/ai_avatar/presentation/providers/avatar_render
 import 'package:wynndiff/features/ai_avatar/presentation/renderers/avatar_renderer.dart';
 import 'package:wynndiff/features/ai_avatar/presentation/renderers/chibi_procedural_renderer.dart';
 import 'package:wynndiff/features/ai_avatar/presentation/renderers/layered_sprite_renderer.dart';
+import 'package:wynndiff/features/ai_avatar/presentation/renderers/render_3d_avatar_renderer.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('avatarRendererProvider fallback', () {
-    test('falls back to ChibiProceduralRenderer when sprite manifest is absent', () async {
+  group('avatarRendererProvider resolution', () {
+    test('resolves to Render3dAvatarRenderer when 3D figurine assets are bundled', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       final renderer = await container.read(avatarRendererProvider.future);
-      expect(renderer, isA<ChibiProceduralRenderer>());
-      expect(renderer.kind, equals(AvatarRendererKind.procedural));
+      expect(renderer, isA<Render3dAvatarRenderer>());
+      expect(renderer.kind, equals(AvatarRendererKind.glb));
+      final r3d = renderer as Render3dAvatarRenderer;
+      expect(r3d.assetPathFor(AvatarMood.idle, null), endsWith('/idle.png'));
+      expect(r3d.assetPathFor(AvatarMood.error, null), endsWith('/pout.png'));
+      expect(r3d.assetPathFor(AvatarMood.success, null), endsWith('/happy.png'));
+      expect(r3d.assetPathFor(AvatarMood.thinking, null), endsWith('/thinking.png'));
+      expect(r3d.assetPathFor(AvatarMood.streaming, null), endsWith('/talking.png'));
+      expect(r3d.assetPathFor(AvatarMood.sleepy, null), endsWith('/sleepy.png'));
     });
 
     test('resolveAvatarRenderer falls back cleanly on malformed manifest', () async {
